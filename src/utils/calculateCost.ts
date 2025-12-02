@@ -1,6 +1,8 @@
 import { SALARY_BANDS } from "./salaryBands";
 
-export function calculateMonthlyCost(role: string, workerType: "permanent" | "gig" = "permanent"): number {
+export function calculateMonthlyCost(role: string, workerType: "permanent" | "gig" | "none" = "permanent"): number {
+  if (workerType === "none") return 0;
+
   const band = SALARY_BANDS[workerType][role as keyof typeof SALARY_BANDS.permanent];
   if (!band) return 0;
 
@@ -25,7 +27,19 @@ export function calculateAnnualCost(role: string, workerType: "permanent" | "gig
   return calculateMonthlyCost(role, workerType) * 12;
 }
 
-export function calculateCostBreakdown(role: string, workerType: "permanent" | "gig" = "permanent") {
+export function calculateCostBreakdown(role: string, workerType: "permanent" | "gig" | "none" = "permanent") {
+  if (workerType === "none") {
+    return {
+      midpoint: 0,
+      allowance: 0,
+      statutory: 0,
+      gpa_gtl: 0,
+      medical: 0,
+      ghs: 0,
+      total: 0
+    };
+  }
+
   const band = SALARY_BANDS[workerType][role as keyof typeof SALARY_BANDS.permanent];
   if (!band) {
     return {

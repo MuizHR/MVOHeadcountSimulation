@@ -11,9 +11,14 @@ export const ROLE_MAP: Record<string, string> = {
   "Senior Executive": "senior_executive",
   "Executive": "executive",
   "Executive-B": "executive_b",
+  "Executive B": "executive_b",
   "Senior Clerical / Technician / Secretary": "senior_clerical",
+  "Senior Clerical": "senior_clerical",
   "Clerk / Technician": "clerk",
-  "Office Assistant / General Worker": "office_assistant"
+  "Clerk": "clerk",
+  "Office Assistant / General Worker": "office_assistant",
+  "Office Assistant": "office_assistant",
+  "General Worker": "general_worker"
 };
 
 export function getRoleBandKey(roleLabel: string): string {
