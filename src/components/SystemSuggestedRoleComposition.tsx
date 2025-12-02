@@ -1,7 +1,7 @@
 import React from 'react';
 import { Lightbulb } from 'lucide-react';
 import { calculateMonthlyCost } from '../utils/calculateCost';
-import { getRoleBandKey } from '../utils/roleMap';
+import { getRoleBandKey, ROLE_MAP } from '../utils/roleMap';
 import { getWorkerType, RecommendedStrategy, WorkerType } from '../utils/workerType';
 
 interface RoleUnit {
@@ -20,6 +20,7 @@ interface RoleRow {
   role: string;
   units: number;
   fteShare: number;
+  unitCost: number;
   monthlyCost: number;
 }
 
@@ -32,8 +33,8 @@ export function SystemSuggestedRoleComposition({
   const workerType: WorkerType = getWorkerType(recommendedStrategy);
 
   const roleRows: RoleRow[] = roles.map(role => {
-    const roleBandKey = getRoleBandKey(role.label);
-    const unitCost = calculateMonthlyCost(roleBandKey, workerType);
+    const roleKey = ROLE_MAP[role.label] || getRoleBandKey(role.label);
+    const unitCost = calculateMonthlyCost(roleKey, workerType);
     const fteShare = role.units * 1.0;
     const totalRoleCost = unitCost * role.units;
 
@@ -41,6 +42,7 @@ export function SystemSuggestedRoleComposition({
       role: role.label,
       units: role.units,
       fteShare,
+      unitCost,
       monthlyCost: totalRoleCost
     };
   });

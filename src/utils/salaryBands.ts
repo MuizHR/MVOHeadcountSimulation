@@ -1,3 +1,127 @@
+export interface SalaryBandDefinition {
+  salaryRange: [number, number];
+  fixedAllowance: number;
+  statRate: number;
+  gpaRate: number;
+  medical: number;
+  ghsRate: number;
+}
+
+export const salaryBands: Record<string, SalaryBandDefinition> = {
+  senior_chief_officer: {
+    salaryRange: [34900, 66130],
+    fixedAllowance: 7000,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  chief_officer: {
+    salaryRange: [28500, 55240],
+    fixedAllowance: 6000,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  general_manager: {
+    salaryRange: [18600, 44780],
+    fixedAllowance: 4800,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  deputy_general_manager: {
+    salaryRange: [14500, 34890],
+    fixedAllowance: 3700,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  senior_manager: {
+    salaryRange: [11000, 26380],
+    fixedAllowance: 600,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  manager: {
+    salaryRange: [7500, 16304],
+    fixedAllowance: 500,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  deputy_manager: {
+    salaryRange: [6600, 14050],
+    fixedAllowance: 450,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  senior_executive: {
+    salaryRange: [3650, 9827],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  executive: {
+    salaryRange: [2780, 7765],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  executive_b: {
+    salaryRange: [2000, 6174],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  senior_clerical: {
+    salaryRange: [1700, 4100],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  clerk: {
+    salaryRange: [1700, 3030],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  office_assistant: {
+    salaryRange: [1700, 2760],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  },
+  general_worker: {
+    salaryRange: [1700, 2760],
+    fixedAllowance: 300,
+    statRate: 0.20,
+    gpaRate: 0.04,
+    medical: 600,
+    ghsRate: 0.10
+  }
+};
+
 export const SALARY_BANDS = {
   permanent: {
     senior_chief_officer: { min: 34900, max: 66130, allowance: 7000 },
