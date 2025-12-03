@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Briefcase, Mail, Calendar, ArrowLeft, Save } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Calendar, ArrowLeft, Save, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -10,6 +10,7 @@ interface UserProfile {
   company: string | null;
   department: string | null;
   job_title: string | null;
+  role: string;
   created_at: string;
 }
 
@@ -18,7 +19,7 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ onBack }: ProfilePageProps) {
-  const { user } = useAuth();
+  const { user, appUser, isAdmin } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -247,6 +248,29 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Shield className="w-4 h-4" />
+                  Account Role
+                </label>
+                <div className="flex items-center gap-2">
+                  {profile?.role === 'admin' ? (
+                    <span className="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-semibold rounded-lg">
+                      Administrator
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg">
+                      User
+                    </span>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    {profile?.role === 'admin'
+                      ? 'Full system access with user management capabilities'
+                      : 'Standard user access'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="w-4 h-4" />
                   Member Since
                 </label>
@@ -261,6 +285,36 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
             </div>
           </div>
         </div>
+
+        {isAdmin() && (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-6">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 px-8 py-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <Shield className="w-6 h-6" />
+                Admin Tools
+              </h2>
+            </div>
+            <div className="p-8">
+              <p className="text-gray-600 mb-4">
+                As an administrator, you have access to additional features:
+              </p>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  View all user simulations
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  Delete any simulation
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  Manage user roles (contact system administrator)
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
