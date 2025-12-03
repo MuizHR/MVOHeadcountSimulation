@@ -242,7 +242,7 @@ export function Step6ResultsDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -362,44 +362,40 @@ export function Step6ResultsDashboard() {
           </div>
         </div>
 
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <p className="text-sm text-gray-600 text-center mb-4">
+            Click <strong>Save & Complete Simulation</strong> to finalise this run and store it in <strong>My Simulations</strong> for future reference or duplication.
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={previousStep}
+              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Back
+            </button>
+
+            <button
+              onClick={handleNewSimulation}
+              className="px-6 py-3 border-2 border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
+            >
+              New Simulation
+            </button>
+
+            <button
+              onClick={handleSaveSimulation}
+              disabled={isSaving || isSaved}
+              className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save & Complete Simulation'}
+            </button>
+          </div>
+        </div>
+
         {showSaveSuccess && (
           <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
             Simulation saved successfully!
           </div>
         )}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={previousStep}
-              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              Back
-            </button>
-
-            <div className="text-sm text-gray-600 text-center flex-1 mx-4">
-              Click <strong>Save & Complete Simulation</strong> to finalise this run and store it in <strong>My Simulations</strong> for future reference or duplication.
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleNewSimulation}
-                className="px-6 py-2 border-2 border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
-              >
-                New Simulation
-              </button>
-              <button
-                onClick={handleSaveSimulation}
-                disabled={isSaving || isSaved}
-                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save & Complete Simulation'}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
