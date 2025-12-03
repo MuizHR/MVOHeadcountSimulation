@@ -1,0 +1,353 @@
+import React, { useState, useEffect } from 'react';
+import { FileDown, FileText, FileSpreadsheet, Mail, Info, HelpCircle } from 'lucide-react';
+import { useWizard } from '../../contexts/WizardContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { WizardNavigation } from './WizardNavigation';
+import { KPICards } from '../dashboard/KPICards';
+import { SystemRoleCompositionPanel } from '../dashboard/SystemRoleCompositionPanel';
+import { SubFunctionAccordion } from '../dashboard/SubFunctionAccordion';
+import { HeadcountComparisonTable } from '../dashboard/HeadcountComparisonTable';
+import { transformToSimulationResult } from '../../utils/dashboardDataTransformer';
+import { generateOverallRoleComposition } from '../../utils/overallRoleComposition';
+import { fetchAllStaffTypes } from '../../services/staffTypeService';
+import { simulationHistoryService } from '../../services/simulationHistoryService';
+import { SimulationResult } from '../../types/dashboardResult';
+import { planningTypeConfig, sizeOfOperationConfig } from '../../types/planningConfig';
+
+interface TooltipProps {
+  content: string;
+}
+
+function Tooltip({ content }: TooltipProps) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={() => setShow(!show)}
+        className="text-gray-400 hover:text-gray-600 transition-colors"
+        type="button"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+      {show && (
+        <div className="absolute z-50 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl -top-2 left-full ml-2">
+          <div className="whitespace-pre-line">{content}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Step6ResultsDashboard() {
+  const { state, previousStep, reset, synchronizedResults, duplicateSimulationId } = useWizard();
+  const { simulationInputs, subFunctions } = state;
+  const { user } = useAuth();
+
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  useEffect(() => {
+    const calculateResult = async () => {
+      try {
+        const staffTypes = await fetchAllStaffTypes();
+
+        const mvoFte = Array.from(synchronizedResults.values()).reduce(
+          (sum, result: any) => sum + (result.mvo?.recommendedHeadcount || 0),
+          0
+        );
+
+        const mvoComposition = generateOverallRoleComposition(mvoFte, staffTypes);
+
+        const result = transformToSimulationResult(
+          simulationInputs,
+          subFunctions,
+          synchronizedResults,
+          mvoComposition
+        );
+
+        setSimulationResult(result);
+      } catch (error) {
+        console.error('Error calculating simulation result:', error);
+      }
+    };
+
+    if (synchronizedResults.size > 0) {
+      calculateResult();
+    }
+  }, [synchronizedResults, simulationInputs, subFunctions]);
+
+  const handleSaveSimulation = async () => {
+    if (!user || !simulationResult) {
+      alert('You must be logged in to save simulations');
+      return;
+    }
+
+    if (isSaved) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const workloadScore = Array.from(synchronizedResults.values()).reduce(
+        (sum, result: any) => {
+          const workTypes = result.mvo?.workTypes || {};
+          const workTypeTotal = Object.values(workTypes).reduce((s: number, v: any) => s + (v || 0), 0);
+          return sum + workTypeTotal;
+        },
+        0
+      );
+
+      const inputPayload = {
+        simulationInputs,
+        subFunctions: subFunctions.map(sf => ({
+          id: sf.id,
+          name: sf.name,
+          workTypes: sf.workTypes,
+          currentFTE: sf.currentFTE,
+          template: sf.template
+        }))
+      };
+
+      const resultPayload = {
+        synchronizedResults: Array.from(synchronizedResults.entries()).map(([key, value]) => ({
+          subFunctionId: key,
+          result: value
+        })),
+        simulationResult
+      };
+
+      if (duplicateSimulationId) {
+        await simulationHistoryService.updateSimulation(duplicateSimulationId, {
+          simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
+          business_area: simulationInputs.businessArea || 'Not specified',
+          planning_type: simulationInputs.planningTypeKey || 'new_function',
+          size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          workload_score: Math.round(workloadScore),
+          total_fte: simulationResult.totalFte,
+          total_monthly_cost: simulationResult.avgMonthlyCostRm,
+          input_payload: inputPayload,
+          result_payload: resultPayload
+        });
+      } else {
+        await simulationHistoryService.saveSimulation({
+          user_id: user.id,
+          simulation_id: simulationResult.simulationId,
+          simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
+          business_area: simulationInputs.businessArea || 'Not specified',
+          planning_type: simulationInputs.planningTypeKey || 'new_function',
+          size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          workload_score: Math.round(workloadScore),
+          total_fte: simulationResult.totalFte,
+          total_monthly_cost: simulationResult.avgMonthlyCostRm,
+          input_payload: inputPayload,
+          result_payload: resultPayload
+        });
+      }
+
+      setIsSaved(true);
+      setShowSaveSuccess(true);
+
+      setTimeout(() => {
+        setShowSaveSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving simulation:', error);
+      alert('Failed to save simulation. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNewSimulation = () => {
+    reset();
+  };
+
+  const planningTypeLabel = simulationInputs.planningTypeKey
+    ? planningTypeConfig[simulationInputs.planningTypeKey]?.label || 'Unknown'
+    : 'Unknown';
+
+  const sizeOfOperationLabel = simulationInputs.sizeOfOperationKey
+    ? sizeOfOperationConfig[simulationInputs.sizeOfOperationKey]?.label || 'Unknown'
+    : 'Unknown';
+
+  if (!simulationResult) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Calculating results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-32">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            MVO Results: {simulationResult.simulationName}
+          </h1>
+          <p className="text-gray-600">
+            Planning Type: {planningTypeLabel} • Size of Operation: {sizeOfOperationLabel}
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-2 border-teal-300 rounded-xl px-6 py-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Info className="w-6 h-6 text-teal-700" />
+              <div>
+                <div className="font-bold text-gray-900 mb-1">Recommended Configuration</div>
+                <div className="text-sm text-gray-700">
+                  {simulationResult.totalFte.toFixed(1)} FTE • ~{simulationResult.avgDurationDays} days Avg, {simulationResult.p90DurationDays} days P90 • {simulationResult.successRatePct.toFixed(1)}% success • RM {Math.round(simulationResult.avgMonthlyCostRm).toLocaleString()}/month
+                </div>
+              </div>
+            </div>
+            <Tooltip content="This is the simulator's best fit between headcount, time and risk, based on your inputs and Monte Carlo simulation." />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 mb-6">
+          <button
+            onClick={() => alert('Export to Word - Coming soon')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            Export Word
+          </button>
+          <button
+            onClick={() => alert('Export to PDF - Coming soon')}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+          >
+            <FileDown className="w-4 h-4" />
+            Export PDF
+          </button>
+          <button
+            onClick={() => alert('Export to Excel - Coming soon')}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Export Excel
+          </button>
+          <button
+            onClick={() => alert('Send via Email - Coming soon')}
+            disabled={isSendingEmail}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium disabled:bg-gray-400"
+          >
+            <Mail className="w-4 h-4" />
+            {isSendingEmail ? 'Sending...' : 'Send Report via Email'}
+          </button>
+        </div>
+
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Key Statistics</h2>
+        <KPICards keyStats={simulationResult.keyStats} />
+
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            <SubFunctionAccordion subFunctions={simulationResult.subFunctions} />
+            <HeadcountComparisonTable subFunctions={simulationResult.subFunctions} />
+          </div>
+
+          <div className="lg:col-span-1">
+            <SystemRoleCompositionPanel composition={simulationResult.systemRoleComposition} />
+
+            <div className="mt-6 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">AI Summary for HR Decision-Making</h3>
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-600 font-bold mt-0.5">•</span>
+                  <div>
+                    <strong>Staffing:</strong> The MVO analysis recommends {simulationResult.keyStats.mvoHeadcount} FTE, {Math.abs(simulationResult.keyStats.mvoHeadcount - simulationResult.keyStats.baselineHeadcount)} {simulationResult.keyStats.mvoHeadcount > simulationResult.keyStats.baselineHeadcount ? 'more' : 'fewer'} than the baseline.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-600 font-bold mt-0.5">•</span>
+                  <div>
+                    <strong>Risk:</strong> The recommended configuration carries {simulationResult.keyStats.mvoFailureRiskPct < 10 ? 'low' : simulationResult.keyStats.mvoFailureRiskPct < 25 ? 'medium' : 'high'} risk ({simulationResult.keyStats.mvoFailureRiskPct.toFixed(1)}% failure rate).
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-600 font-bold mt-0.5">•</span>
+                  <div>
+                    <strong>Next Steps:</strong> Review the system-suggested role composition and adjust based on internal salary structures. Consider the recommended strategies for each sub-function.
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Info className="w-5 h-5 text-blue-700" />
+            Understanding the Results
+          </h3>
+          <div className="space-y-3 text-sm text-gray-700">
+            <div>
+              <strong className="text-gray-900">Baseline vs MVO:</strong> Baseline reflects traditional Excel-style headcount calculation. MVO (Minimum Viable Operations) is the optimized headcount that balances cost, time, and risk based on Monte Carlo simulation.
+            </div>
+            <div>
+              <strong className="text-gray-900">Reading the Comparison Table:</strong> Each row shows a different team size. The green highlighted row is the MVO recommendation that best balances delivery time, cost, and success rate.
+            </div>
+            <div>
+              <strong className="text-gray-900">P-values (P50, P75, P90):</strong> These percentiles show delivery time confidence. P90 means 90% of scenarios finish on or before this duration. Higher percentiles account for delays and risk factors.
+            </div>
+            <div>
+              <strong className="text-gray-900">Risk Categories:</strong> Low risk (&lt;10%) indicates high confidence. Medium risk (10-25%) suggests monitoring needed. High risk (&gt;25%) indicates potential delivery challenges.
+            </div>
+            <div>
+              <strong className="text-gray-900">System-Suggested Roles:</strong> The role composition uses JLG salary bands and is a starting point. Adjust based on specific requirements, internal structures, and market conditions.
+            </div>
+          </div>
+        </div>
+
+        {showSaveSuccess && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+            Simulation saved successfully!
+          </div>
+        )}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={previousStep}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Back
+            </button>
+
+            <div className="text-sm text-gray-600 text-center flex-1 mx-4">
+              Click <strong>Save & Complete Simulation</strong> to finalise this run and store it in <strong>My Simulations</strong> for future reference or duplication.
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleNewSimulation}
+                className="px-6 py-2 border-2 border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
+              >
+                New Simulation
+              </button>
+              <button
+                onClick={handleSaveSimulation}
+                disabled={isSaving || isSaved}
+                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save & Complete Simulation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

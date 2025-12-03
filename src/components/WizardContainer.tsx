@@ -6,7 +6,7 @@ import { Step2FunctionSetup } from './wizard/Step2FunctionSetup';
 import { Step3HRQuestions } from './wizard/Step3HRQuestions';
 import { Step4OperatingModel } from './wizard/Step4OperatingModel';
 import { Step5Review } from './wizard/Step5Review';
-import { Step6ResultsSynchronized } from './wizard/Step6ResultsSynchronized';
+import { Step6ResultsDashboard } from './wizard/Step6ResultsDashboard';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { SimulationHistory } from '../types/simulationHistory';
 import { Info } from 'lucide-react';
@@ -57,7 +57,7 @@ export function WizardContainer({ duplicateSimulationId }: WizardContainerProps)
       case 'review':
         return <Step5Review />;
       case 'results':
-        return <Step6ResultsSynchronized />;
+        return <Step6ResultsDashboard />;
       default:
         return <Step1PlanningContext />;
     }
