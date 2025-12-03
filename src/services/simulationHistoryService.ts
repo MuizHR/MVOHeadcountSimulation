@@ -255,11 +255,9 @@ export const simulationHistoryService = {
       throw new Error('Original simulation not found');
     }
 
-    const now = new Date().toISOString();
-
     const newSimulation = {
       user_id: userId,
-      simulation_id: `SIM-${Date.now().toString().slice(-8)}`,
+      simulation_id: crypto.randomUUID(),
       simulation_name: options.newName,
       business_area: original.business_area,
       planning_type: original.planning_type,
@@ -271,9 +269,7 @@ export const simulationHistoryService = {
       result_payload: null,
       parent_simulation_id: original.id,
       scenario_label: options.scenarioLabel || null,
-      duplication_note: options.duplicationNote || null,
-      created_at: now,
-      updated_at: now
+      duplication_note: options.duplicationNote || null
     };
 
     const { data, error } = await supabase
