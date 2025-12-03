@@ -65,18 +65,31 @@ export function Step6ResultsDashboard() {
           return;
         }
 
+        console.log('Fetching staff types...');
         const staffTypes = await fetchAllStaffTypes();
-        console.log('Fetched staff types:', staffTypes.length);
+        console.log('Fetched staff types:', staffTypes.length, staffTypes);
 
+        if (!staffTypes || staffTypes.length === 0) {
+          console.error('No staff types available');
+          alert('No salary bands found in the database. Please configure salary bands first.');
+          return;
+        }
+
+        console.log('Calculating MVO FTE...');
         const mvoFte = Array.from(synchronizedResults.values()).reduce(
-          (sum, result: any) => sum + (result.mvo?.recommendedHeadcount || 0),
+          (sum, result: any) => {
+            console.log('Processing result:', result);
+            return sum + (result.mvo?.recommendedHeadcount || 0);
+          },
           0
         );
         console.log('Total MVO FTE:', mvoFte);
 
+        console.log('Generating role composition...');
         const mvoComposition = generateOverallRoleComposition(mvoFte, staffTypes);
         console.log('Generated MVO composition:', mvoComposition);
 
+        console.log('Transforming to simulation result...');
         const result = transformToSimulationResult(
           simulationInputs,
           subFunctions,
@@ -86,9 +99,11 @@ export function Step6ResultsDashboard() {
         console.log('Transformed simulation result:', result);
 
         setSimulationResult(result);
-      } catch (error) {
+        console.log('Simulation result set successfully');
+      } catch (error: any) {
         console.error('Error calculating simulation result:', error);
-        alert('Error calculating results. Please try again or go back to review.');
+        console.error('Error stack:', error.stack);
+        alert(`Error calculating results: ${error.message || 'Unknown error'}\n\nPlease check the console for details or go back to review.`);
       }
     };
 
