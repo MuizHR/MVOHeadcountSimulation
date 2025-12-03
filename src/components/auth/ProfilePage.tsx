@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Briefcase, Mail, Calendar, ArrowLeft, Save, Shield } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Calendar, Save, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -15,10 +15,13 @@ interface UserProfile {
 }
 
 interface ProfilePageProps {
-  onBack: () => void;
+  currentView: string;
+  userName: string;
+  onNavigate: (view: string) => void;
+  onSignOut: () => void;
 }
 
-export function ProfilePage({ onBack }: ProfilePageProps) {
+export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: ProfilePageProps) {
   const { user, appUser, isAdmin } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,9 +98,9 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-600 border-t-transparent"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading profile...</p>
         </div>
       </div>
@@ -105,25 +108,18 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
       <div className="max-w-3xl mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Dashboard
-        </button>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-8 py-12 text-center">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 px-8 py-12 text-center">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4">
-              <User className="w-12 h-12 text-teal-600" />
+              <User className="w-12 h-12 text-cyan-600" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">
               {profile?.full_name || 'User'}
             </h1>
-            <p className="text-teal-100">{profile?.email || user?.email}</p>
+            <p className="text-cyan-100">{profile?.email || user?.email}</p>
           </div>
 
           <div className="p-8">
@@ -132,7 +128,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
                 >
                   Edit Profile
                 </button>
@@ -155,7 +151,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Save'}
@@ -175,7 +171,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     type="text"
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                     placeholder="Enter your full name"
                   />
                 ) : (
@@ -202,7 +198,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                     placeholder="Enter your company name"
                   />
                 ) : (
@@ -220,7 +216,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     type="text"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                     placeholder="Enter your department"
                   />
                 ) : (
@@ -238,7 +234,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     type="text"
                     value={formData.job_title}
                     onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                     placeholder="Enter your job title"
                   />
                 ) : (
