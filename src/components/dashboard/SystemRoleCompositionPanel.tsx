@@ -40,10 +40,10 @@ export function SystemRoleCompositionPanel({ composition }: SystemRoleCompositio
             <Briefcase className="w-6 h-6 text-teal-700" />
             <div>
               <h3 className="text-lg font-bold text-gray-900">System-Suggested Role Composition</h3>
-              <p className="text-sm text-gray-600 mt-0.5">Based on JLG salary bands and Support / Admin / Back-office profile</p>
+              <p className="text-sm text-gray-600 mt-0.5">Actual salary-based costs using JLG bands for Support / Admin / Back-office roles</p>
             </div>
           </div>
-          <Tooltip content="The simulator recommends a default role mix using JLG salary bands. You can use this as a starting point and adjust in workforce planning or recruitment discussions." />
+          <Tooltip content="This shows the actual cost based on real JLG salary bands (mid-point salaries + cost multipliers). These costs may differ from the simulation estimates above, as they reflect market salary data rather than work type coefficients." />
         </div>
       </div>
 

@@ -109,7 +109,7 @@ export function KPICards({ keyStats }: KPICardsProps) {
             <DollarSign className="w-5 h-5 text-purple-700" />
             <h3 className="font-semibold text-gray-900">Cost & Savings</h3>
           </div>
-          <Tooltip content="Costs include salary bands, allowances and employer contributions based on JLG structures. Savings compare your baseline versus the MVO recommendation." />
+          <Tooltip content="These are simulation-based cost estimates using work type coefficients. For actual salary-based costs using JLG bands, see the System-Suggested Role Composition section below." />
         </div>
 
         <div className="space-y-1.5 text-sm">
