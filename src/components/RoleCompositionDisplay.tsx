@@ -1,7 +1,8 @@
 import React from 'react';
 import { Users, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
 import { SuggestedRoleComposition } from '../types/staffType';
-import { StaffConfiguration, calculateSimpleRoleCost, calculateRolePatternMetrics } from '../types/staffType';
+import { StaffConfiguration } from '../types/staffType';
+import { computeMonthlyCost, findRoleOption } from '../config/staffCost';
 
 interface RoleCompositionDisplayProps {
   suggestedComposition: SuggestedRoleComposition;
@@ -17,29 +18,34 @@ export function RoleCompositionDisplay({
   let userCost = 0;
   let userDescription = '';
 
-  if (userConfiguration && staffTypes.length > 0) {
+  if (userConfiguration) {
     if (userConfiguration.mode === 'simple' && userConfiguration.simpleRoleId) {
-      userCost = calculateSimpleRoleCost(
-        userConfiguration.simpleRoleId,
-        suggestedComposition.totalFteRequired,
-        staffTypes
-      );
-      const role = staffTypes.find(st => st.id === userConfiguration.simpleRoleId);
-      userDescription = role
-        ? `${suggestedComposition.totalFteRequired.toFixed(2)} ${role.title}${suggestedComposition.totalFteRequired > 1 ? 's' : ''}`
-        : '';
+      const roleOption = findRoleOption(userConfiguration.simpleRoleId);
+      if (roleOption) {
+        const costPerFte = computeMonthlyCost(roleOption.employmentType, roleOption.bandKey);
+        userCost = costPerFte * suggestedComposition.totalFteRequired;
+        userDescription = `${suggestedComposition.totalFteRequired.toFixed(2)} ${roleOption.label}${suggestedComposition.totalFteRequired > 1 ? 's' : ''}`;
+      }
     } else if (userConfiguration.mode === 'advanced' && userConfiguration.advancedPattern) {
-      const userMetrics = calculateRolePatternMetrics(
-        userConfiguration.advancedPattern,
-        suggestedComposition.totalFteRequired,
-        staffTypes
-      );
-      userCost = userMetrics.totalMonthlyCost;
+      const totalUnits = userConfiguration.advancedPattern.reduce((sum, item) => sum + item.pattern, 0);
+
+      if (totalUnits > 0) {
+        const ftePerUnit = suggestedComposition.totalFteRequired / totalUnits;
+
+        userConfiguration.advancedPattern.forEach(item => {
+          const roleOption = findRoleOption(item.staffTypeId);
+          if (roleOption) {
+            const fteShare = item.pattern * ftePerUnit;
+            const costPerFte = computeMonthlyCost(roleOption.employmentType, roleOption.bandKey);
+            userCost += fteShare * costPerFte;
+          }
+        });
+      }
 
       const patternDesc = userConfiguration.advancedPattern
         .map(item => {
-          const st = staffTypes.find(s => s.id === item.staffTypeId);
-          return st ? `${item.pattern} ${st.title}` : '';
+          const roleOption = findRoleOption(item.staffTypeId);
+          return roleOption ? `${item.pattern} ${roleOption.label}` : '';
         })
         .filter(Boolean)
         .join(' + ');

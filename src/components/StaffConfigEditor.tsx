@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Info, Plus, Trash2, AlertCircle } from 'lucide-react';
-import { StaffType, RolePatternItem, calculateRolePatternMetrics, calculateSimpleRoleCost, StaffConfiguration } from '../types/staffType';
-import { fetchAllStaffTypes } from '../services/staffTypeService';
+import { RolePatternItem, StaffConfiguration } from '../types/staffType';
+import {
+  ROLE_OPTIONS,
+  computeMonthlyCost,
+  getRoleOptionId,
+  findRoleOption,
+  parseRoleOptionId,
+  RoleOption
+} from '../config/staffCost';
+import { SALARY_BANDS } from '../utils/salaryBands';
 
 interface StaffConfigEditorProps {
   totalFteRequired: number;
@@ -11,41 +19,29 @@ interface StaffConfigEditorProps {
 }
 
 export function StaffConfigEditor({ totalFteRequired, configuration, onChange, title = 'Staff Type & Cost' }: StaffConfigEditorProps) {
-  const [staffTypes, setStaffTypes] = useState<StaffType[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadStaffTypes();
-  }, []);
-
-  const loadStaffTypes = async () => {
-    try {
-      const types = await fetchAllStaffTypes();
-      setStaffTypes(types);
-
-      if (types.length > 0 && !configuration.simpleRoleId) {
-        onChange({
-          ...configuration,
-          simpleRoleId: types.find(st => st.title === 'Executive')?.id || types[0].id,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading staff types:', error);
-    } finally {
-      setLoading(false);
+  React.useEffect(() => {
+    if (ROLE_OPTIONS.length > 0 && !configuration.simpleRoleId) {
+      const defaultRole = ROLE_OPTIONS.find(opt => opt.bandKey === 'executive' && opt.employmentType === 'permanent') || ROLE_OPTIONS[0];
+      onChange({
+        ...configuration,
+        simpleRoleId: getRoleOptionId(defaultRole.employmentType, defaultRole.bandKey),
+      });
     }
-  };
+  }, []);
 
   const toggleMode = () => {
     const newMode = configuration.mode === 'simple' ? 'advanced' : 'simple';
 
     if (newMode === 'advanced' && (!configuration.advancedPattern || configuration.advancedPattern.length === 0)) {
-      const defaultRole = staffTypes.find(st => st.id === configuration.simpleRoleId) || staffTypes[0];
+      const defaultRoleOption = configuration.simpleRoleId
+        ? findRoleOption(configuration.simpleRoleId)
+        : ROLE_OPTIONS[0];
+
       onChange({
         mode: newMode,
         simpleRoleId: configuration.simpleRoleId,
-        advancedPattern: defaultRole ? [{
-          staffTypeId: defaultRole.id,
+        advancedPattern: defaultRoleOption ? [{
+          staffTypeId: getRoleOptionId(defaultRoleOption.employmentType, defaultRoleOption.bandKey),
           pattern: 1,
         }] : [],
       });
@@ -65,8 +61,8 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
   };
 
   const addPatternRow = () => {
-    const firstStaffType = staffTypes[0];
-    if (!firstStaffType) return;
+    const firstRoleOption = ROLE_OPTIONS[0];
+    if (!firstRoleOption) return;
 
     const currentPattern = configuration.advancedPattern || [];
     onChange({
@@ -74,7 +70,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
       advancedPattern: [
         ...currentPattern,
         {
-          staffTypeId: firstStaffType.id,
+          staffTypeId: getRoleOptionId(firstRoleOption.employmentType, firstRoleOption.bandKey),
           pattern: 1,
         },
       ],
@@ -102,29 +98,78 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
     });
   };
 
-  const getStaffTypeInfo = (staffTypeId: string) => {
-    return staffTypes.find(st => st.id === staffTypeId);
-  };
-
-  if (loading) {
+  if (ROLE_OPTIONS.length === 0) {
     return (
-      <div className="text-center py-8">
-        <div className="text-gray-600">Loading JLG salary bands...</div>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-yellow-900">Salary band configuration is empty</p>
+            <p className="text-sm text-yellow-800 mt-1">Please check salaryBands / SALARY_BANDS configuration.</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const simpleCost = configuration.simpleRoleId
-    ? calculateSimpleRoleCost(configuration.simpleRoleId, totalFteRequired, staffTypes)
+  const selectedSimpleRole = configuration.simpleRoleId
+    ? findRoleOption(configuration.simpleRoleId)
+    : null;
+
+  const simpleCost = selectedSimpleRole
+    ? computeMonthlyCost(selectedSimpleRole.employmentType, selectedSimpleRole.bandKey) * totalFteRequired
     : 0;
 
-  const selectedSimpleRole = configuration.simpleRoleId
-    ? getStaffTypeInfo(configuration.simpleRoleId)
-    : null;
+  const simpleCostPerFte = selectedSimpleRole
+    ? computeMonthlyCost(selectedSimpleRole.employmentType, selectedSimpleRole.bandKey)
+    : 0;
 
   const advancedMetrics = configuration.mode === 'advanced' && configuration.advancedPattern
-    ? calculateRolePatternMetrics(configuration.advancedPattern, totalFteRequired, staffTypes)
+    ? calculateRolePatternMetricsFromBands(configuration.advancedPattern, totalFteRequired)
     : null;
+
+  function calculateRolePatternMetricsFromBands(
+    items: RolePatternItem[],
+    totalFteRequired: number
+  ) {
+    const totalUnits = items.reduce((sum, item) => sum + item.pattern, 0);
+
+    if (totalUnits === 0) {
+      return {
+        items: [],
+        totalUnits: 0,
+        totalFte: 0,
+        totalMonthlyCost: 0,
+      };
+    }
+
+    const ftePerUnit = totalFteRequired / totalUnits;
+
+    const enrichedItems = items.map(item => {
+      const roleOption = findRoleOption(item.staffTypeId);
+      if (!roleOption) return { ...item, fteShare: 0, monthlyCost: 0 };
+
+      const fteShare = item.pattern * ftePerUnit;
+      const costPerFte = computeMonthlyCost(roleOption.employmentType, roleOption.bandKey);
+      const monthlyCost = fteShare * costPerFte;
+
+      return {
+        ...item,
+        fteShare,
+        monthlyCost,
+      };
+    });
+
+    const totalFte = enrichedItems.reduce((sum, item) => sum + (item.fteShare || 0), 0);
+    const totalMonthlyCost = enrichedItems.reduce((sum, item) => sum + (item.monthlyCost || 0), 0);
+
+    return {
+      items: enrichedItems,
+      totalUnits,
+      totalFte,
+      totalMonthlyCost,
+    };
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -152,11 +197,14 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
               onChange={(e) => updateSimpleRole(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-base"
             >
-              {staffTypes.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.title} – {st.level}
-                </option>
-              ))}
+              {ROLE_OPTIONS.map((opt) => {
+                const id = getRoleOptionId(opt.employmentType, opt.bandKey);
+                return (
+                  <option key={id} value={id}>
+                    {opt.label} – {opt.level}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -171,19 +219,19 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                 <div>
                   <span className="text-gray-600">Salary Range:</span>
                   <span className="ml-2 font-medium text-gray-900">
-                    RM {selectedSimpleRole.min_salary.toLocaleString()} – {selectedSimpleRole.max_salary.toLocaleString()}
+                    RM {SALARY_BANDS[selectedSimpleRole.employmentType][selectedSimpleRole.bandKey].min.toLocaleString()} – {SALARY_BANDS[selectedSimpleRole.employmentType][selectedSimpleRole.bandKey].max.toLocaleString()}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Midpoint:</span>
                   <span className="ml-2 font-medium text-teal-700">
-                    RM {selectedSimpleRole.mid_salary.toLocaleString()}
+                    RM {Math.round((SALARY_BANDS[selectedSimpleRole.employmentType][selectedSimpleRole.bandKey].min + SALARY_BANDS[selectedSimpleRole.employmentType][selectedSimpleRole.bandKey].max) / 2).toLocaleString()}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Employer Cost/FTE:</span>
                   <span className="ml-2 font-medium text-teal-700">
-                    RM {(selectedSimpleRole.mid_salary * selectedSimpleRole.cost_multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo
+                    RM {simpleCostPerFte.toLocaleString()}/mo
                   </span>
                 </div>
               </div>
@@ -198,7 +246,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-gray-600 mb-1">Cost per FTE</div>
               <div className="text-2xl font-bold text-teal-700">
-                RM {selectedSimpleRole ? (selectedSimpleRole.mid_salary * selectedSimpleRole.cost_multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}
+                RM {simpleCostPerFte.toLocaleString()}
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
@@ -255,7 +303,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                   </tr>
                 ) : (
                   configuration.advancedPattern.map((item, index) => {
-                    const staffType = getStaffTypeInfo(item.staffTypeId);
+                    const roleOption = findRoleOption(item.staffTypeId);
                     const enrichedItem = advancedMetrics?.items[index];
 
                     return (
@@ -266,16 +314,19 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                             onChange={(e) => updatePatternRow(index, 'staffTypeId', e.target.value)}
                             className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 text-sm"
                           >
-                            {staffTypes.map((st) => (
-                              <option key={st.id} value={st.id}>
-                                {st.title}
-                              </option>
-                            ))}
+                            {ROLE_OPTIONS.map((opt) => {
+                              const id = getRoleOptionId(opt.employmentType, opt.bandKey);
+                              return (
+                                <option key={id} value={id}>
+                                  {opt.label}
+                                </option>
+                              );
+                            })}
                           </select>
                         </td>
                         <td className="py-3 px-2 text-gray-700">
                           <span className="text-xs px-2 py-1 bg-gray-100 rounded">
-                            {staffType?.level || '-'}
+                            {roleOption?.level || '-'}
                           </span>
                         </td>
                         <td className="py-3 px-2">
