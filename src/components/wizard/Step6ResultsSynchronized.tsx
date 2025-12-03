@@ -947,28 +947,22 @@ xmlns="http://www.w3.org/TR/REC-html40">
         </ul>
       </div>
 
-      {showSaveSuccess && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in">
-          <Check className="w-5 h-5" />
-          <div>
-            <div className="font-semibold">Simulation saved to My Simulations</div>
-            <div className="text-sm text-green-100">You can view, duplicate, and download reports from there.</div>
-          </div>
-        </div>
-      )}
+      <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+        <div className="hidden md:flex items-center justify-between gap-3">
+          <button
+            onClick={previousStep}
+            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Back
+          </button>
 
-      <div className="flex justify-between items-center mt-8 pb-8 border-t pt-8">
-        <button
-          onClick={previousStep}
-          className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-        >
-          Back
-        </button>
+          <button
+            onClick={reset}
+            className="flex items-center gap-2 px-6 py-3 border-2 border-gray-400 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            New Simulation
+          </button>
 
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600 max-w-md text-right">
-            Click <strong>Save & Complete Simulation</strong> to finalise this run and store it in <em>My Simulations</em>. You can view, duplicate, and download reports from there later.
-          </div>
           <button
             onClick={handleSaveSimulation}
             disabled={isSaving || isSaved}
@@ -984,16 +978,52 @@ xmlns="http://www.w3.org/TR/REC-html40">
             {isSaved ? 'Saved to My Simulations' : isSaving ? 'Saving...' : 'Save & Complete Simulation'}
           </button>
         </div>
+
+        <div className="flex md:hidden flex-col gap-3">
+          <button
+            onClick={handleSaveSimulation}
+            disabled={isSaving || isSaved}
+            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+              isSaved
+                ? 'bg-green-600 text-white cursor-default'
+                : isSaving
+                ? 'bg-teal-400 text-white cursor-not-allowed'
+                : 'bg-teal-600 text-white hover:bg-teal-700'
+            }`}
+          >
+            <Check className="w-5 h-5" />
+            {isSaved ? 'Saved to My Simulations' : isSaving ? 'Saving...' : 'Save & Complete Simulation'}
+          </button>
+
+          <button
+            onClick={reset}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-400 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            New Simulation
+          </button>
+
+          <button
+            onClick={previousStep}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Back
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-600 text-center mt-4">
+          Saved simulations will appear in My Simulations, and as an admin you can also see them under All Simulations.
+        </p>
       </div>
 
-      <div className="flex justify-center mt-4 gap-3">
-        <button
-          onClick={reset}
-          className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-        >
-          New Simulation
-        </button>
-      </div>
+      {showSaveSuccess && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in">
+          <Check className="w-5 h-5" />
+          <div>
+            <div className="font-semibold">Simulation saved to My Simulations</div>
+            <div className="text-sm text-green-100">You can view, duplicate, and download reports from there.</div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
