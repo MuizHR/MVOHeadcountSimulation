@@ -1,11 +1,11 @@
-# Checkpoint - HR Planning Simulation Application
+# Checkpoint - HR Planning Simulation Application with MOVA AI Assistant
 
 **Date:** December 3, 2025
-**Commit:** Initial stable checkpoint
+**Version:** 27 - Enhanced MOVA AI Assistant
 
 ## Project Overview
 
-This is a comprehensive HR Planning Simulation application built with React, TypeScript, Vite, and Supabase. The application helps organizations model and optimize their HR staffing strategies through sophisticated simulation and analysis tools.
+This is a comprehensive HR Planning Simulation application built with React, TypeScript, Vite, and Supabase. The application helps organizations model and optimize their HR staffing strategies through sophisticated simulation and analysis tools, now featuring MOVA - an advanced AI assistant for workforce planning.
 
 ## Current State
 
@@ -46,6 +46,24 @@ This is a comprehensive HR Planning Simulation application built with React, Typ
    - Work type coefficients
    - Role composition suggestions
    - Subfunction templates
+
+6. **MOVA - AI Assistant (Version 27)**
+   - Floating chat launcher with pulse animation
+   - Draggable chat window with custom positioning
+   - Three AI personas: HR Expert, HR Advisor, HR Analyst
+   - Full dark mode support with toggle
+   - Speech-to-text with auto-send functionality
+   - Text-to-speech with markdown/symbol cleaning
+   - Session memory for context retention
+   - FAQ section with tooltips (6 questions)
+   - Quick Actions toolbar (6 actions)
+   - Visual onboarding tutorial (3 steps)
+   - Persona help bubble with explanations
+   - What's New panel
+   - Getting Started guide
+   - Dashboard Preview for simulation results
+   - Basic analytics tracking
+   - OpenAI GPT-4o-mini integration via Edge Function
 
 ### Technology Stack
 

@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Volume2, Loader2 } from 'lucide-react';
 import { useMOVA } from '../../contexts/MOVAContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { MOVADashboardPreview } from './MOVADashboardPreview';
 
 export const MOVAMessageList: React.FC = () => {
   const { state } = useMOVA();
@@ -13,6 +14,21 @@ export const MOVAMessageList: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages]);
 
+  const cleanTextForTTS = (text: string): string => {
+    return text
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/`{1,3}/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/_{1,2}/g, '')
+      .replace(/~{1,2}/g, '')
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .replace(/\n+/g, '. ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   const handleTextToSpeech = (messageId: string, content: string) => {
     if (playingMessageId === messageId) {
       window.speechSynthesis.cancel();
@@ -22,7 +38,8 @@ export const MOVAMessageList: React.FC = () => {
 
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(content);
+    const cleanedContent = cleanTextForTTS(content);
+    const utterance = new SpeechSynthesisUtterance(cleanedContent);
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 1;
@@ -86,6 +103,9 @@ export const MOVAMessageList: React.FC = () => {
                 isUser ? userBubbleClasses : movaBubbleClasses
               }`}>
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                {message.isDashboardPreview && message.dashboardData && (
+                  <MOVADashboardPreview data={message.dashboardData} />
+                )}
               </div>
 
               <div className={`flex items-center gap-2 mt-1 px-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>

@@ -4,6 +4,12 @@ import { useMOVA } from '../../contexts/MOVAContext';
 import { MOVAMessageList } from './MOVAMessageList';
 import { MOVAInputArea } from './MOVAInputArea';
 import { MOVAPersonaSelector } from './MOVAPersonaSelector';
+import { MOVAFAQSection } from './MOVAFAQSection';
+import { MOVAQuickActions } from './MOVAQuickActions';
+import { MOVAOnboarding } from './MOVAOnboarding';
+import { MOVAPersonaHelp } from './MOVAPersonaHelp';
+import { MOVAWhatsNew } from './MOVAWhatsNew';
+import { MOVAGettingStarted } from './MOVAGettingStarted';
 
 export const MOVAWindow: React.FC = () => {
   const { state, toggleOpen, toggleDarkMode, setPosition } = useMOVA();
@@ -75,9 +81,11 @@ export const MOVAWindow: React.FC = () => {
       className={`fixed z-50 w-96 h-[600px] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 animate-slide-up ${themeClasses}`}
       style={position}
     >
+      <MOVAOnboarding />
+
       <div
         ref={headerRef}
-        className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 cursor-move flex items-center justify-between"
+        className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 cursor-move flex items-center justify-between relative"
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-3">
@@ -90,7 +98,13 @@ export const MOVAWindow: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <MOVAPersonaHelp />
+
+          <div className="relative">
+            <MOVAWhatsNew />
+          </div>
+
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-lg hover:bg-white/20 transition-colors"
@@ -114,6 +128,14 @@ export const MOVAWindow: React.FC = () => {
       </div>
 
       <MOVAPersonaSelector />
+
+      <MOVAQuickActions />
+
+      <div className="relative">
+        <MOVAGettingStarted />
+      </div>
+
+      <MOVAFAQSection />
 
       <MOVAMessageList />
 

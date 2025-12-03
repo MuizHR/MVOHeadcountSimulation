@@ -16,10 +16,12 @@ export const MOVAInputArea: React.FC = () => {
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = async (event: any) => {
         const transcript = event.results[0][0].transcript;
-        setInput(transcript);
         setIsRecording(false);
+        if (transcript.trim()) {
+          await sendMessage(transcript.trim());
+        }
       };
 
       recognitionRef.current.onerror = () => {
@@ -36,7 +38,7 @@ export const MOVAInputArea: React.FC = () => {
         recognitionRef.current.stop();
       }
     };
-  }, []);
+  }, [sendMessage]);
 
   const handleSend = async () => {
     if (!input.trim() || state.isThinking) return;
