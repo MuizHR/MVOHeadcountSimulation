@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calculator, Home, LogOut, User, Users } from 'lucide-react';
+import { Calculator, Home, LogOut, User, Users, History, Shield } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WizardProvider } from './contexts/WizardContext';
 import { MOVAProvider } from './contexts/MOVAContext';
@@ -11,12 +11,14 @@ import { ProfilePage } from './components/auth/ProfilePage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MOVALauncher } from './components/mova/MOVALauncher';
 import { MOVAWindow } from './components/mova/MOVAWindow';
+import { MySimulations } from './components/MySimulations';
+import { AdminSimulations } from './components/AdminSimulations';
 import { supabase } from './lib/supabase';
 
-type AppView = 'landing' | 'wizard' | 'profile';
+type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations';
 
 function AuthenticatedApp() {
-  const { user, signOut } = useAuth();
+  const { user, appUser, signOut, isAdmin } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [refreshKey, setRefreshKey] = useState(0);
   const [userName, setUserName] = useState<string>('');
@@ -87,6 +89,143 @@ function AuthenticatedApp() {
     );
   }
 
+  if (currentView === 'mySimulations') {
+    return (
+      <WizardProvider>
+        <MOVAProvider>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <header className="bg-white shadow-sm border-b border-gray-200">
+              <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-gray-900 font-bold text-lg">JLG Group MVO & Headcount Simulator</div>
+                      <div className="text-cyan-600 text-xs font-medium">AI-enabled workforce planning</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-gray-700 text-sm px-4 py-2 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
+                      {userName || user?.email}
+                      {appUser?.role === 'admin' && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">Admin</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setCurrentView('mySimulations')}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <History className="w-4 h-4" />
+                      My Simulations
+                    </button>
+                    {isAdmin() && (
+                      <button
+                        onClick={() => setCurrentView('adminSimulations')}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Admin
+                      </button>
+                    )}
+                    <button
+                      onClick={handleShowProfile}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleBackToLanding}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <Home className="w-4 h-4" />
+                      Home
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </header>
+            <MySimulations onNavigate={(view) => setCurrentView(view as AppView)} />
+            <MOVALauncher />
+            <MOVAWindow />
+          </div>
+        </MOVAProvider>
+      </WizardProvider>
+    );
+  }
+
+  if (currentView === 'adminSimulations') {
+    return (
+      <WizardProvider>
+        <MOVAProvider>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <header className="bg-white shadow-sm border-b border-gray-200">
+              <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-gray-900 font-bold text-lg">JLG Group MVO & Headcount Simulator</div>
+                      <div className="text-cyan-600 text-xs font-medium">AI-enabled workforce planning</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-gray-700 text-sm px-4 py-2 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
+                      {userName || user?.email}
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">Admin</span>
+                    </div>
+                    <button
+                      onClick={() => setCurrentView('mySimulations')}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <History className="w-4 h-4" />
+                      My Simulations
+                    </button>
+                    <button
+                      onClick={handleShowProfile}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleBackToLanding}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <Home className="w-4 h-4" />
+                      Home
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </header>
+            <AdminSimulations onNavigate={(view) => setCurrentView(view as AppView)} />
+            <MOVALauncher />
+            <MOVAWindow />
+          </div>
+        </MOVAProvider>
+      </WizardProvider>
+    );
+  }
+
   return (
     <WizardProvider>
       <MOVAProvider>
@@ -104,9 +243,28 @@ function AuthenticatedApp() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-gray-700 text-sm px-4 py-2 bg-gray-100 rounded-lg border border-gray-200">
+                  <div className="text-gray-700 text-sm px-4 py-2 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
                     {userName || user?.email}
+                    {appUser?.role === 'admin' && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">Admin</span>
+                    )}
                   </div>
+                  <button
+                    onClick={() => setCurrentView('mySimulations')}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <History className="w-4 h-4" />
+                    My Simulations
+                  </button>
+                  {isAdmin() && (
+                    <button
+                      onClick={() => setCurrentView('adminSimulations')}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </button>
+                  )}
                   <button
                     onClick={handleShowProfile}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
