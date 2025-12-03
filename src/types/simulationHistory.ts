@@ -12,8 +12,13 @@ export interface SimulationHistory {
   input_payload: any;
   result_payload: any;
   created_at: string;
+  updated_at?: string;
+  parent_simulation_id?: string | null;
+  duplication_note?: string | null;
+  scenario_label?: string | null;
   user_email?: string;
   user_name?: string;
+  parent_simulation_name?: string;
 }
 
 export interface SimulationHistoryFilters {

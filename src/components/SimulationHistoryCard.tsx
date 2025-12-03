@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Copy, Trash2, FileText, Download, FileSpreadsheet } from 'lucide-react';
+import { Eye, Copy, Trash2, FileText, Download, FileSpreadsheet, Tag, GitBranch } from 'lucide-react';
 import { SimulationHistory } from '../types/simulationHistory';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,6 +10,7 @@ interface SimulationHistoryCardProps {
   onView: (simulation: SimulationHistory) => void;
   onDuplicate: (simulation: SimulationHistory) => void;
   onDelete: (id: string) => void;
+  onViewParent?: (parentId: string) => void;
   showOwner?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
   onView,
   onDuplicate,
   onDelete,
+  onViewParent,
   showOwner = false
 }) => {
   const { isAdmin } = useAuth();
@@ -80,6 +82,32 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
               <p className="text-xs text-gray-500 mt-1">
                 Owner: {simulation.user_name} ({simulation.user_email})
               </p>
+            )}
+
+            {(simulation.scenario_label || simulation.parent_simulation_id) && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {simulation.scenario_label && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-100 text-cyan-800 text-xs font-medium rounded-full">
+                    <Tag className="w-3 h-3" />
+                    {simulation.scenario_label}
+                  </span>
+                )}
+                {simulation.parent_simulation_id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onViewParent) {
+                        onViewParent(simulation.parent_simulation_id!);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors"
+                    title={simulation.parent_simulation_name || 'View original simulation'}
+                  >
+                    <GitBranch className="w-3 h-3" />
+                    Duplicated from: {simulation.parent_simulation_name || '[Original]'}
+                  </button>
+                )}
+              </div>
             )}
           </div>
           <div className="flex gap-1 ml-2">

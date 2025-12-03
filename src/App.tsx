@@ -17,7 +17,7 @@ import { NavBar } from './components/NavBar';
 import { SimulationHistoryViewer } from './components/SimulationHistoryViewer';
 import { supabase } from './lib/supabase';
 
-type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations' | 'userManagement' | 'historyViewer';
+type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations' | 'userManagement' | 'historyViewer' | 'duplicateSimulation';
 
 function AuthenticatedApp() {
   const { user, appUser, signOut, isAdmin } = useAuth();
@@ -145,6 +145,9 @@ function AuthenticatedApp() {
             <MySimulations onNavigate={(view, data) => {
               if (view === 'view-simulation' && data?.simulationId) {
                 handleViewSimulation(data.simulationId);
+              } else if (view === 'duplicate-simulation' && data?.simulationId) {
+                setSelectedSimulationId(data.simulationId);
+                setCurrentView('duplicateSimulation');
               } else {
                 setCurrentView(view as AppView);
               }
@@ -171,6 +174,9 @@ function AuthenticatedApp() {
             <AdminSimulations onNavigate={(view, data) => {
               if (view === 'view-simulation' && data?.simulationId) {
                 handleViewSimulation(data.simulationId);
+              } else if (view === 'duplicate-simulation' && data?.simulationId) {
+                setSelectedSimulationId(data.simulationId);
+                setCurrentView('duplicateSimulation');
               } else {
                 setCurrentView(view as AppView);
               }
@@ -198,6 +204,33 @@ function AuthenticatedApp() {
           <MOVAWindow />
         </div>
       </MOVAProvider>
+    );
+  }
+
+  if (currentView === 'duplicateSimulation' && selectedSimulationId) {
+    return (
+      <WizardProvider>
+        <MOVAProvider>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <NavBar
+              currentView="wizard"
+              userName={userName || user?.email || 'User'}
+              onNavigate={setCurrentView}
+              onSignOut={handleSignOut}
+            />
+            <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+              <div className="max-w-7xl mx-auto">
+                <p className="text-sm text-blue-800">
+                  <strong>Duplicate Mode:</strong> This scenario has been duplicated. You can modify any details and save it as a new simulation.
+                </p>
+              </div>
+            </div>
+            <WizardContainer />
+            <MOVALauncher />
+            <MOVAWindow />
+          </div>
+        </MOVAProvider>
+      </WizardProvider>
     );
   }
 

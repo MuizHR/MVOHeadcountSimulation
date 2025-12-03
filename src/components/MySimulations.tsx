@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { SimulationHistory, SimulationHistoryFilters, SortField, SortOrder } from '../types/simulationHistory';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { SimulationHistoryCard } from './SimulationHistoryCard';
+import { DuplicateSimulationDialog } from './DuplicateSimulationDialog';
 
 interface MySimulationsProps {
   onNavigate?: (view: string, data?: any) => void;
@@ -18,6 +19,8 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [duplicatingSimulation, setDuplicatingSimulation] = useState<SimulationHistory | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   useEffect(() => {
     loadSimulations();
@@ -51,7 +54,32 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
   };
 
   const handleDuplicate = (simulation: SimulationHistory) => {
-    alert('Duplicate simulation: ' + simulation.simulation_name + '\n\nThis will be implemented to load the wizard with pre-filled data.');
+    setDuplicatingSimulation(simulation);
+  };
+
+  const handleDuplicateConfirm = async (options: {
+    newName: string;
+    scenarioLabel: string;
+    duplicationNote: string;
+  }) => {
+    if (!appUser || !duplicatingSimulation) return;
+
+    setIsDuplicating(true);
+    try {
+      const newSimulation = await simulationHistoryService.duplicateSimulation(
+        duplicatingSimulation.id,
+        appUser.id,
+        options
+      );
+
+      setDuplicatingSimulation(null);
+      onNavigate?.('duplicate-simulation', { simulationId: newSimulation.id });
+    } catch (error) {
+      console.error('Error duplicating simulation:', error);
+      alert('Unable to duplicate simulation right now. Please try again later.');
+    } finally {
+      setIsDuplicating(false);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -180,9 +208,19 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
               onView={handleView}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onViewParent={(parentId) => onNavigate?.('view-simulation', { simulationId: parentId })}
             />
           ))}
         </div>
+      )}
+
+      {duplicatingSimulation && (
+        <DuplicateSimulationDialog
+          simulation={duplicatingSimulation}
+          onConfirm={handleDuplicateConfirm}
+          onCancel={() => setDuplicatingSimulation(null)}
+          isProcessing={isDuplicating}
+        />
       )}
     </div>
   );

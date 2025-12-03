@@ -38,7 +38,30 @@ export const simulationHistoryService = {
     const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+
+    const simulations = data || [];
+
+    const parentIds = simulations
+      .filter(s => s.parent_simulation_id)
+      .map(s => s.parent_simulation_id);
+
+    if (parentIds.length > 0) {
+      const { data: parents } = await supabase
+        .from('simulation_history')
+        .select('id, simulation_name')
+        .in('id', parentIds);
+
+      const parentMap = new Map((parents || []).map(p => [p.id, p.simulation_name]));
+
+      return simulations.map(sim => ({
+        ...sim,
+        parent_simulation_name: sim.parent_simulation_id
+          ? parentMap.get(sim.parent_simulation_id) || '[Unavailable]'
+          : undefined
+      }));
+    }
+
+    return simulations;
   },
 
   async getAllSimulations(
@@ -103,12 +126,29 @@ export const simulationHistoryService = {
 
       const profileMap = new Map((profiles || []).map(p => [p.id, p]));
 
+      const parentIds = simulations
+        .filter(s => s.parent_simulation_id)
+        .map(s => s.parent_simulation_id);
+
+      let parentMap = new Map();
+      if (parentIds.length > 0) {
+        const { data: parents } = await supabase
+          .from('simulation_history')
+          .select('id, simulation_name')
+          .in('id', parentIds);
+
+        parentMap = new Map((parents || []).map(p => [p.id, p.simulation_name]));
+      }
+
       return simulations.map((sim: any) => {
         const profile = profileMap.get(sim.user_id);
         return {
           ...sim,
           user_email: profile?.email,
-          user_name: profile?.full_name
+          user_name: profile?.full_name,
+          parent_simulation_name: sim.parent_simulation_id
+            ? parentMap.get(sim.parent_simulation_id) || '[Unavailable]'
+            : undefined
         };
       });
     } catch (error) {
@@ -159,5 +199,51 @@ export const simulationHistoryService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  async duplicateSimulation(
+    originalId: string,
+    userId: string,
+    options: {
+      newName: string;
+      scenarioLabel?: string;
+      duplicationNote?: string;
+    }
+  ): Promise<SimulationHistory> {
+    const original = await this.getSimulationById(originalId);
+
+    if (!original) {
+      throw new Error('Original simulation not found');
+    }
+
+    const now = new Date().toISOString();
+
+    const newSimulation = {
+      user_id: userId,
+      simulation_id: `SIM-${Date.now().toString().slice(-8)}`,
+      simulation_name: options.newName,
+      business_area: original.business_area,
+      planning_type: original.planning_type,
+      size_of_operation: original.size_of_operation,
+      workload_score: 0,
+      total_fte: 0,
+      total_monthly_cost: 0,
+      input_payload: original.input_payload,
+      result_payload: null,
+      parent_simulation_id: original.id,
+      scenario_label: options.scenarioLabel || null,
+      duplication_note: options.duplicationNote || null,
+      created_at: now,
+      updated_at: now
+    };
+
+    const { data, error } = await supabase
+      .from('simulation_history')
+      .insert(newSimulation)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 };
