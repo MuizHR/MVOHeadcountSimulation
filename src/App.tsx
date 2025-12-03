@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calculator, Home, LogOut, User, Users } from 'lucide-react';
+import { Calculator, Home, LogOut, User, Users, Shield } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WizardProvider } from './contexts/WizardContext';
 import { WizardContainer } from './components/WizardContainer';
@@ -8,18 +8,21 @@ import { LoginPage } from './components/auth/LoginPage';
 import { SignUpPage } from './components/auth/SignUpPage';
 import { ProfilePage } from './components/auth/ProfilePage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import AdminDashboard from './components/admin/AdminDashboard';
 import { supabase } from './lib/supabase';
 
-type AppView = 'landing' | 'wizard' | 'profile';
+type AppView = 'landing' | 'wizard' | 'profile' | 'admin';
 
 function AuthenticatedApp() {
   const { user, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [refreshKey, setRefreshKey] = useState(0);
   const [userName, setUserName] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadUserName();
+    checkAdminStatus();
   }, [user]);
 
   const loadUserName = async () => {
@@ -43,6 +46,23 @@ function AuthenticatedApp() {
     }
   };
 
+  const checkAdminStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('email')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
+
   const handleStartSimulation = () => {
     setCurrentView('wizard');
   };
@@ -54,6 +74,10 @@ function AuthenticatedApp() {
 
   const handleShowProfile = () => {
     setCurrentView('profile');
+  };
+
+  const handleShowAdmin = () => {
+    setCurrentView('admin');
   };
 
   const handleSignOut = async () => {
@@ -70,6 +94,10 @@ function AuthenticatedApp() {
 
   if (currentView === 'profile') {
     return <ProfilePage onBack={handleBackToLanding} />;
+  }
+
+  if (currentView === 'admin' && isAdmin) {
+    return <AdminDashboard />;
   }
 
   return (
@@ -91,6 +119,15 @@ function AuthenticatedApp() {
                 <div className="text-gray-700 text-sm px-4 py-2 bg-gray-100 rounded-lg border border-gray-200">
                   {userName || user?.email}
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={handleShowAdmin}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-sm"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </button>
+                )}
                 <button
                   onClick={handleShowProfile}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
