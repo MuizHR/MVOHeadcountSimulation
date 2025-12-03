@@ -262,7 +262,7 @@ export function Step6ResultsDashboard() {
             <div className="flex items-center gap-3">
               <Info className="w-6 h-6 text-teal-700" />
               <div>
-                <div className="font-bold text-gray-900 mb-1">MVO Recommendation (Monte Carlo)</div>
+                <div className="font-bold text-gray-900 mb-1">MVO Recommendation</div>
                 <div className="text-sm text-gray-700">
                   {simulationResult.totalFte.toFixed(1)} FTE • ~{simulationResult.avgDurationDays} days Avg, {simulationResult.p90DurationDays} days P90 • {simulationResult.successRatePct.toFixed(1)}% success • RM {Math.round(simulationResult.avgMonthlyCostRm).toLocaleString()}/month
                 </div>
