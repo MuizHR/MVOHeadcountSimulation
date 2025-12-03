@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Mail, FileDown, FileText, FileSpreadsheet, HelpCircle, Shield, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, Mail, FileDown, FileText, FileSpreadsheet, HelpCircle, Shield, Info, Check } from 'lucide-react';
 import { useWizard } from '../../contexts/WizardContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { WizardNavigation } from './WizardNavigation';
@@ -15,6 +15,7 @@ import { MvoReportLayout } from '../MvoReportLayout';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { planningTypeConfig, sizeOfOperationConfig } from '../../types/planningConfig';
 import { buildFinancialSummary, formatCurrency } from '../../utils/financialSummary';
+import { simulationHistoryService } from '../../services/simulationHistoryService';
 
 function formatHeadcount(value: number): string {
   return value === 1 ? '1 person' : `${value} persons`;
@@ -58,6 +59,9 @@ export function Step6ResultsSynchronized() {
   const [baselineComposition, setBaselineComposition] = useState<OverallRoleComposition | null>(null);
   const [mvoComposition, setMvoComposition] = useState<OverallRoleComposition | null>(null);
   const [showFullExplanation, setShowFullExplanation] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
   React.useEffect(() => {
     const calculateOverallCompositions = async () => {
@@ -122,8 +126,89 @@ export function Step6ResultsSynchronized() {
     }
   };
 
+  const handleSaveSimulation = async () => {
+    if (!user) {
+      alert('You must be logged in to save simulations');
+      return;
+    }
 
+    if (isSaved) {
+      return;
+    }
 
+    setIsSaving(true);
+
+    try {
+      const totalFte = Array.from(synchronizedResults.values()).reduce(
+        (sum, result: any) => sum + (result.mvo?.recommendedHeadcount || 0),
+        0
+      );
+
+      const totalMonthlyCost = Array.from(synchronizedResults.values()).reduce(
+        (sum, result: any) => sum + (result.mvo?.selectedResult?.avgCost || 0),
+        0
+      );
+
+      const workloadScore = Array.from(synchronizedResults.values()).reduce(
+        (sum, result: any) => {
+          const workTypes = result.mvo?.workTypes || {};
+          const workTypeTotal = Object.values(workTypes).reduce((s: number, v: any) => s + (v || 0), 0);
+          return sum + workTypeTotal;
+        },
+        0
+      );
+
+      const inputPayload = {
+        simulationInputs,
+        subFunctions: subFunctions.map(sf => ({
+          id: sf.id,
+          name: sf.name,
+          workTypes: sf.workTypes,
+          currentFTE: sf.currentFTE,
+          template: sf.template
+        }))
+      };
+
+      const resultPayload = {
+        synchronizedResults: Array.from(synchronizedResults.entries()).map(([key, value]) => ({
+          subFunctionId: key,
+          result: value
+        })),
+        baselineComposition,
+        mvoComposition,
+        totalBaseline,
+        totalMVO,
+        financialSummary
+      };
+
+      await simulationHistoryService.saveSimulation({
+        user_id: user.id,
+        simulation_id: crypto.randomUUID(),
+        simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
+        business_area: simulationInputs.businessArea || 'Not specified',
+        planning_type: simulationInputs.planningTypeKey || 'new_function',
+        size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+        workload_score: Math.round(workloadScore),
+        total_fte: totalFte,
+        total_monthly_cost: totalMonthlyCost,
+        input_payload: inputPayload,
+        result_payload: resultPayload
+      });
+
+      setIsSaved(true);
+      setShowSaveSuccess(true);
+
+      setTimeout(() => {
+        setShowSaveSuccess(false);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error saving simulation:', error);
+      alert('We couldn\'t save this simulation. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDownloadWord = () => {
     const reportHtml = renderToStaticMarkup(
@@ -848,7 +933,44 @@ xmlns="http://www.w3.org/TR/REC-html40">
         </ul>
       </div>
 
-      <WizardNavigation onBack={previousStep} canGoBack={true} canGoNext={false} />
+      {showSaveSuccess && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in">
+          <Check className="w-5 h-5" />
+          <div>
+            <div className="font-semibold">Simulation saved to My Simulations</div>
+            <div className="text-sm text-green-100">You can view, duplicate, and download reports from there.</div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center mt-8 pb-8 border-t pt-8">
+        <button
+          onClick={previousStep}
+          className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Back
+        </button>
+
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600 max-w-md text-right">
+            Click <strong>Save & Complete Simulation</strong> to finalise this run and store it in <em>My Simulations</em>. You can view, duplicate, and download reports from there later.
+          </div>
+          <button
+            onClick={handleSaveSimulation}
+            disabled={isSaving || isSaved}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+              isSaved
+                ? 'bg-green-600 text-white cursor-default'
+                : isSaving
+                ? 'bg-teal-400 text-white cursor-not-allowed'
+                : 'bg-teal-600 text-white hover:bg-teal-700'
+            }`}
+          >
+            <Check className="w-5 h-5" />
+            {isSaved ? 'Saved to My Simulations' : isSaving ? 'Saving...' : 'Save & Complete Simulation'}
+          </button>
+        </div>
+      </div>
 
       <div className="flex justify-center mt-4 gap-3">
         <button
