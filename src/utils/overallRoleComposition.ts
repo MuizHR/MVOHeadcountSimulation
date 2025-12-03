@@ -24,7 +24,20 @@ export function generateOverallRoleComposition(
   const pattern: OverallRolePattern[] = [];
 
   const findRole = (title: string): StaffType | undefined => {
-    return staffTypes.find(st => st.title === title);
+    // First try to find exact match
+    let role = staffTypes.find(st => st.title === title);
+
+    // If not found, try to find by job grade with Permanent employment type
+    if (!role) {
+      role = staffTypes.find(st => st.title === `${title} (Permanent)`);
+    }
+
+    // If still not found, try to find by job grade (any employment type)
+    if (!role) {
+      role = staffTypes.find(st => st.title.startsWith(title + ' ('));
+    }
+
+    return role;
   };
 
   if (totalFte <= 2.0) {
@@ -98,7 +111,7 @@ export function generateOverallRoleComposition(
     const seniorManagerRole = findRole('Senior Manager');
     const managerRole = findRole('Manager');
     const executiveRole = findRole('Executive');
-    const clerkRole = findRole('Clerk / Technician');
+    const officerRole = findRole('Officer');
 
     if (seniorManagerRole && managerRole && executiveRole) {
       pattern.push({
@@ -127,10 +140,10 @@ export function generateOverallRoleComposition(
           });
         }
 
-        if (clerkRole && nonExecUnits > 0) {
+        if (officerRole && nonExecUnits > 0) {
           pattern.push({
-            roleTitle: 'Clerk / Technician',
-            roleId: clerkRole.id,
+            roleTitle: 'Officer',
+            roleId: officerRole.id,
             units: nonExecUnits,
           });
         }
