@@ -273,20 +273,20 @@ function transformRoleComposition(
   composition: OverallRoleComposition,
   totalFte: number
 ): SystemRoleComposition {
-  const rows: RoleCompositionRow[] = composition.rows.map(row => ({
-    roleLabel: row.roleLabel,
-    levelLabel: row.levelLabel,
+  const rows: RoleCompositionRow[] = composition.pattern.map(row => ({
+    roleLabel: row.roleTitle,
+    levelLabel: row.roleTitle,
     units: row.units,
-    fteShare: row.fteShare,
-    monthlyCostRm: row.monthlyCostRm
+    fteShare: row.fteShare || 0,
+    monthlyCostRm: row.monthlyCost || 0
   }));
 
   return {
-    patternLabel: composition.patternLabel,
+    patternLabel: composition.narrative,
     totalFte: composition.totalFte,
     rows,
-    totalMonthlyCostRm: composition.totalMonthlyCostRm,
-    rationale: `System-suggested mix: ${composition.patternLabel}, aligned to total FTE ≈ ${totalFte.toFixed(1)} and JLG salary bands for Support / Admin / Back-office work.`
+    totalMonthlyCostRm: composition.totalMonthlyCost || 0,
+    rationale: `System-suggested mix: ${composition.narrative}, aligned to total FTE ≈ ${totalFte.toFixed(1)} and salary bands for Support / Admin / Back-office work.`
   };
 }
 
