@@ -18,7 +18,12 @@ export function transformToSimulationResult(
   synchronizedResults: Map<string, any>,
   mvoComposition: OverallRoleComposition | null
 ): SimulationResult {
+  console.log('[transformToSimulationResult] Starting transformation');
+  console.log('[transformToSimulationResult] synchronizedResults size:', synchronizedResults.size);
+  console.log('[transformToSimulationResult] subFunctions length:', subFunctions.length);
+
   const resultsArray = Array.from(synchronizedResults.values());
+  console.log('[transformToSimulationResult] resultsArray:', resultsArray);
 
   const totalBaselineHeadcount = resultsArray.reduce(
     (sum, result: any) => sum + (result.mvo?.baselineHeadcount || 0),
@@ -144,7 +149,7 @@ export function transformToSimulationResult(
     ? transformRoleComposition(mvoComposition, totalMvoHeadcount)
     : createDefaultRoleComposition(totalMvoHeadcount);
 
-  return {
+  const finalResult = {
     simulationId: crypto.randomUUID(),
     simulationName: simulationInputs.simulationName || 'Untitled Simulation',
     planningType: simulationInputs.planningType,
@@ -158,6 +163,11 @@ export function transformToSimulationResult(
     systemRoleComposition,
     keyStats
   };
+
+  console.log('[transformToSimulationResult] Transformation complete');
+  console.log('[transformToSimulationResult] Final result:', finalResult);
+
+  return finalResult;
 }
 
 function createEmptySubFunctionResult(sf: SubFunction): SubFunctionResult {

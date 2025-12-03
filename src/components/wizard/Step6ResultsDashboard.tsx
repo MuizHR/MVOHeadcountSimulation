@@ -54,15 +54,28 @@ export function Step6ResultsDashboard() {
 
   useEffect(() => {
     const calculateResult = async () => {
+      console.log('Step6 Dashboard - Starting calculation');
+      console.log('synchronizedResults size:', synchronizedResults.size);
+      console.log('synchronizedResults:', synchronizedResults);
+      console.log('subFunctions:', subFunctions);
+
       try {
+        if (synchronizedResults.size === 0) {
+          console.warn('No synchronized results available');
+          return;
+        }
+
         const staffTypes = await fetchAllStaffTypes();
+        console.log('Fetched staff types:', staffTypes.length);
 
         const mvoFte = Array.from(synchronizedResults.values()).reduce(
           (sum, result: any) => sum + (result.mvo?.recommendedHeadcount || 0),
           0
         );
+        console.log('Total MVO FTE:', mvoFte);
 
         const mvoComposition = generateOverallRoleComposition(mvoFte, staffTypes);
+        console.log('Generated MVO composition:', mvoComposition);
 
         const result = transformToSimulationResult(
           simulationInputs,
@@ -70,16 +83,16 @@ export function Step6ResultsDashboard() {
           synchronizedResults,
           mvoComposition
         );
+        console.log('Transformed simulation result:', result);
 
         setSimulationResult(result);
       } catch (error) {
         console.error('Error calculating simulation result:', error);
+        alert('Error calculating results. Please try again or go back to review.');
       }
     };
 
-    if (synchronizedResults.size > 0) {
-      calculateResult();
-    }
+    calculateResult();
   }, [synchronizedResults, simulationInputs, subFunctions]);
 
   const handleSaveSimulation = async () => {
@@ -178,11 +191,36 @@ export function Step6ResultsDashboard() {
     : 'Unknown';
 
   if (!simulationResult) {
+    const hasNoResults = synchronizedResults.size === 0;
+
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Calculating results...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center max-w-md p-8 bg-white rounded-xl shadow-lg">
+          {!hasNoResults ? (
+            <>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600 font-medium">Calculating results...</p>
+              <p className="mt-2 text-sm text-gray-500">
+                Processing {synchronizedResults.size} sub-function{synchronizedResults.size !== 1 ? 's' : ''}...
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-amber-600 mb-4">
+                <Info className="w-12 h-12 mx-auto" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">No Results Available</h3>
+              <p className="text-gray-600 mb-6">
+                Please go back to Step 5 (Review) and click "Calculate Results" to generate the simulation.
+              </p>
+              <button
+                onClick={previousStep}
+                className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+              >
+                Go Back to Review
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
