@@ -83,4 +83,5 @@ export type SimulationResult = {
   subFunctions: SubFunctionResult[];
   systemRoleComposition: SystemRoleComposition;
   keyStats: KeyStats;
+  combinedComparisonRows: ComparisonRow[];
 };

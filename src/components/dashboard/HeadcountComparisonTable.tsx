@@ -4,6 +4,7 @@ import { SubFunctionResult, ComparisonRow } from '../../types/dashboardResult';
 
 interface HeadcountComparisonTableProps {
   subFunctions: SubFunctionResult[];
+  combinedComparisonRows: ComparisonRow[];
 }
 
 function Tooltip({ content }: { content: string }) {
@@ -40,13 +41,11 @@ function getRiskColor(riskBucket: 'LOW' | 'MEDIUM' | 'HIGH') {
   }
 }
 
-export function HeadcountComparisonTable({ subFunctions }: HeadcountComparisonTableProps) {
+export function HeadcountComparisonTable({ subFunctions, combinedComparisonRows }: HeadcountComparisonTableProps) {
   const [activeTab, setActiveTab] = useState<string>('all');
 
-  const allComparisons = subFunctions.length > 0 ? subFunctions[0].comparisonRows : [];
-
   const activeSubFunction = activeTab === 'all' ? null : subFunctions.find(sf => sf.id === activeTab);
-  const displayRows = activeTab === 'all' ? allComparisons : (activeSubFunction?.comparisonRows || []);
+  const displayRows = activeTab === 'all' ? combinedComparisonRows : (activeSubFunction?.comparisonRows || []);
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm mt-6">

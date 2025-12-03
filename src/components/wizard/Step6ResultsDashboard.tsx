@@ -306,7 +306,10 @@ export function Step6ResultsDashboard() {
         <div className="grid lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2">
             <SubFunctionAccordion subFunctions={simulationResult.subFunctions} />
-            <HeadcountComparisonTable subFunctions={simulationResult.subFunctions} />
+            <HeadcountComparisonTable
+              subFunctions={simulationResult.subFunctions}
+              combinedComparisonRows={simulationResult.combinedComparisonRows}
+            />
           </div>
 
           <div className="lg:col-span-1">

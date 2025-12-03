@@ -149,6 +149,12 @@ export function transformToSimulationResult(
     ? transformRoleComposition(mvoComposition, totalMvoHeadcount)
     : createDefaultRoleComposition(totalMvoHeadcount);
 
+  const combinedComparisonRows = generateCombinedComparisonRows(
+    synchronizedResults,
+    totalBaselineHeadcount,
+    totalMvoHeadcount
+  );
+
   const finalResult = {
     simulationId: crypto.randomUUID(),
     simulationName: simulationInputs.simulationName || 'Untitled Simulation',
@@ -161,7 +167,8 @@ export function transformToSimulationResult(
     successRatePct: avgSuccessRate,
     subFunctions: subFunctionResults,
     systemRoleComposition,
-    keyStats
+    keyStats,
+    combinedComparisonRows
   };
 
   console.log('[transformToSimulationResult] Transformation complete');
@@ -305,4 +312,76 @@ function mapSizeOfOperation(operationSize: string): 'small' | 'medium' | 'large'
   if (operationSize.includes('medium')) return 'medium';
   if (operationSize.includes('large')) return 'large';
   return 'custom';
+}
+
+function generateCombinedComparisonRows(
+  synchronizedResults: Map<string, any>,
+  totalBaselineHeadcount: number,
+  totalMvoHeadcount: number
+): ComparisonRow[] {
+  console.log('[generateCombinedComparisonRows] Starting generation');
+
+  const resultsArray = Array.from(synchronizedResults.values());
+
+  if (resultsArray.length === 0) {
+    console.warn('[generateCombinedComparisonRows] No results to combine');
+    return [];
+  }
+
+  const subFunctionData = resultsArray.map((result: any) => {
+    const mvoData = result?.mvo;
+    return {
+      baselineHeadcount: mvoData?.baselineHeadcount || 0,
+      recommendedHeadcount: mvoData?.recommendedHeadcount || 0,
+      testResults: mvoData?.testResults || []
+    };
+  });
+
+  const uniqueHeadcounts = new Set<number>();
+  subFunctionData.forEach(sf => {
+    sf.testResults.forEach((tr: any) => {
+      uniqueHeadcounts.add(tr.headcount);
+    });
+  });
+
+  const sortedHeadcounts = Array.from(uniqueHeadcounts).sort((a, b) => a - b);
+
+  const aggregatedRows: ComparisonRow[] = sortedHeadcounts.map(headcountPerSf => {
+    const totalHeadcount = headcountPerSf * subFunctionData.length;
+
+    let totalDuration = 0;
+    let totalCost = 0;
+    let totalSuccess = 0;
+    let count = 0;
+
+    subFunctionData.forEach(sf => {
+      const matchingTest = sf.testResults.find((tr: any) => tr.headcount === headcountPerSf);
+      if (matchingTest) {
+        totalDuration += matchingTest.avgDuration || 0;
+        totalCost += matchingTest.avgCost || 0;
+        totalSuccess += matchingTest.deadlineMetProbability || 0;
+        count++;
+      }
+    });
+
+    const avgDuration = count > 0 ? totalDuration / count : 0;
+    const avgSuccess = count > 0 ? totalSuccess / count : 0;
+    const avgRisk = 100 - avgSuccess;
+
+    return {
+      headcount: Math.round(totalHeadcount * 10) / 10,
+      isBaseline: Math.abs(totalHeadcount - totalBaselineHeadcount) < 0.5,
+      isMvo: Math.abs(totalHeadcount - totalMvoHeadcount) < 0.5,
+      avgDurationDays: avgDuration,
+      p90DurationDays: avgDuration * 1.1,
+      avgCostRm: totalCost,
+      successRatePct: avgSuccess,
+      riskPct: avgRisk,
+      riskBucket: getRiskBucket(avgRisk)
+    };
+  });
+
+  console.log('[generateCombinedComparisonRows] Generated rows:', aggregatedRows.length);
+  console.log('[generateCombinedComparisonRows] Sample rows:', aggregatedRows.slice(0, 3));
+  return aggregatedRows;
 }
