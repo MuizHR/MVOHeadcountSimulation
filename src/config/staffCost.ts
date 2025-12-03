@@ -125,3 +125,47 @@ export function findRoleOption(id: string): RoleOption | undefined {
     opt => opt.employmentType === parsed.employmentType && opt.bandKey === parsed.bandKey
   );
 }
+
+export interface SalaryBandSummary {
+  min: number;
+  max: number;
+  allowance: number;
+  midpoint: number;
+  monthlyCost: number;
+  statRate: number;
+  gpaRate: number;
+  ghsRate: number;
+  medical: number;
+}
+
+/**
+ * Get comprehensive salary band summary for display
+ */
+export function getSalaryBandSummary(
+  employmentType: EmploymentTypeKey,
+  bandKey: RoleKey
+): SalaryBandSummary {
+  const band = salaryBands[bandKey];
+  const bandGroup = SALARY_BANDS[employmentType][bandKey];
+
+  const midpoint = (band.salaryRange[0] + band.salaryRange[1]) / 2;
+  const monthlyCost = computeMonthlyCost(employmentType, bandKey);
+
+  return {
+    min: bandGroup.min,
+    max: bandGroup.max,
+    allowance: bandGroup.allowance,
+    midpoint,
+    monthlyCost,
+    statRate: band.statRate,
+    gpaRate: band.gpaRate,
+    ghsRate: band.ghsRate,
+    medical: band.medical
+  };
+}
+
+/**
+ * Format money value for display
+ */
+export const formatMoney = (value: number) =>
+  `RM ${value.toLocaleString("en-MY", { maximumFractionDigits: 0 })}`;

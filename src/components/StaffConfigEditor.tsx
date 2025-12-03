@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Info, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Info, Plus, Trash2, AlertCircle, HelpCircle } from 'lucide-react';
 import { RolePatternItem, StaffConfiguration } from '../types/staffType';
 import {
   ROLE_OPTIONS,
@@ -7,9 +7,12 @@ import {
   getRoleOptionId,
   findRoleOption,
   parseRoleOptionId,
-  RoleOption
+  RoleOption,
+  getSalaryBandSummary,
+  formatMoney
 } from '../config/staffCost';
 import { SALARY_BANDS } from '../utils/salaryBands';
+import { AddRoleDialog } from './AddRoleDialog';
 
 interface StaffConfigEditorProps {
   totalFteRequired: number;
@@ -19,6 +22,9 @@ interface StaffConfigEditorProps {
 }
 
 export function StaffConfigEditor({ totalFteRequired, configuration, onChange, title = 'Staff Type & Cost' }: StaffConfigEditorProps) {
+  const [showAddRoleDialog, setShowAddRoleDialog] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
+
   React.useEffect(() => {
     if (ROLE_OPTIONS.length > 0 && !configuration.simpleRoleId) {
       const defaultRole = ROLE_OPTIONS.find(opt => opt.bandKey === 'executive' && opt.employmentType === 'permanent') || ROLE_OPTIONS[0];
@@ -60,17 +66,14 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
     });
   };
 
-  const addPatternRow = () => {
-    const firstRoleOption = ROLE_OPTIONS[0];
-    if (!firstRoleOption) return;
-
+  const addPatternRow = (roleOption: RoleOption) => {
     const currentPattern = configuration.advancedPattern || [];
     onChange({
       ...configuration,
       advancedPattern: [
         ...currentPattern,
         {
-          staffTypeId: getRoleOptionId(firstRoleOption.employmentType, firstRoleOption.bandKey),
+          staffTypeId: getRoleOptionId(roleOption.employmentType, roleOption.bandKey),
           pattern: 1,
         },
       ],
@@ -274,7 +277,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
 
           <div className="flex justify-end mb-3">
             <button
-              onClick={addPatternRow}
+              onClick={() => setShowAddRoleDialog(true)}
               className="flex items-center gap-2 px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
             >
               <Plus className="w-4 h-4" />
@@ -287,6 +290,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
               <thead>
                 <tr className="border-b-2 border-gray-300">
                   <th className="text-left py-3 px-2 font-semibold text-gray-900">Role</th>
+                  <th className="text-center py-3 px-2 w-8 font-semibold text-gray-900">Info</th>
                   <th className="text-left py-3 px-2 font-semibold text-gray-900">Level</th>
                   <th className="text-center py-3 px-2 font-semibold text-gray-900">Pattern</th>
                   <th className="text-right py-3 px-2 font-semibold text-gray-900">FTE Share</th>
@@ -297,7 +301,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
               <tbody>
                 {(!configuration.advancedPattern || configuration.advancedPattern.length === 0) ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                    <td colSpan={7} className="text-center py-8 text-gray-500">
                       No role pattern defined. Click "Add Role" to start.
                     </td>
                   </tr>
@@ -305,6 +309,8 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                   configuration.advancedPattern.map((item, index) => {
                     const roleOption = findRoleOption(item.staffTypeId);
                     const enrichedItem = advancedMetrics?.items[index];
+                    const bandSummary = roleOption ? getSalaryBandSummary(roleOption.employmentType, roleOption.bandKey) : null;
+                    const tooltipId = `tooltip-${index}`;
 
                     return (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
@@ -323,6 +329,44 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                               );
                             })}
                           </select>
+                        </td>
+                        <td className="py-3 px-2 text-center relative">
+                          <div className="relative inline-block">
+                            <button
+                              type="button"
+                              onMouseEnter={() => setTooltipVisible(tooltipId)}
+                              onMouseLeave={() => setTooltipVisible(null)}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                            >
+                              <HelpCircle className="w-4 h-4" />
+                            </button>
+                            {tooltipVisible === tooltipId && bandSummary && (
+                              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 w-72 bg-white border-2 border-gray-300 rounded-lg shadow-xl p-3 text-xs">
+                                <div className="font-semibold mb-2 text-gray-900">Salary Band Details</div>
+                                <div className="space-y-1 text-gray-700">
+                                  <div className="flex justify-between">
+                                    <span>Salary Range:</span>
+                                    <span className="font-medium">{formatMoney(bandSummary.min)} – {formatMoney(bandSummary.max)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Fixed Allowance:</span>
+                                    <span className="font-medium">{formatMoney(bandSummary.allowance)} / month</span>
+                                  </div>
+                                  <div className="flex justify-between pt-1 border-t border-gray-200">
+                                    <span>Est. Cost / FTE:</span>
+                                    <span className="font-bold text-teal-700">{formatMoney(bandSummary.monthlyCost)}</span>
+                                  </div>
+                                  <div className="mt-2 pt-2 border-t border-gray-200 text-slate-600">
+                                    <div className="font-medium mb-1">Includes:</div>
+                                    <div>• Statutory: {bandSummary.statRate * 100}%</div>
+                                    <div>• GPA/GTL: {bandSummary.gpaRate * 100}%</div>
+                                    <div>• GHS: {bandSummary.ghsRate * 100}%</div>
+                                    <div>• Medical: {formatMoney(bandSummary.medical)}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-2 text-gray-700">
                           <span className="text-xs px-2 py-1 bg-gray-100 rounded">
@@ -362,6 +406,7 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
                 <tfoot>
                   <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
                     <td className="py-3 px-2 text-gray-900">Total</td>
+                    <td className="py-3 px-2"></td>
                     <td className="py-3 px-2"></td>
                     <td className="py-3 px-2 text-center text-gray-900">
                       {advancedMetrics.totalUnits} units
@@ -410,6 +455,15 @@ export function StaffConfigEditor({ totalFteRequired, configuration, onChange, t
           )}
         </div>
       )}
+
+      <AddRoleDialog
+        isOpen={showAddRoleDialog}
+        onClose={() => setShowAddRoleDialog(false)}
+        onAdd={(roleOption) => {
+          addPatternRow(roleOption);
+          setShowAddRoleDialog(false);
+        }}
+      />
     </div>
   );
 }
