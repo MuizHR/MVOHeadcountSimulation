@@ -65,6 +65,7 @@ export interface HeadcountTestResult {
   minCost: number;
   maxCost: number;
   deadlineMetProbability: number;
+  successRate: number;
   failureRisk: number;
   withinBudgetProbability: number;
   riskLevel: 'low' | 'medium' | 'high';

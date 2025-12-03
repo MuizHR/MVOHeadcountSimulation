@@ -156,6 +156,7 @@ export function runHeadcountSimulation(
     minCost,
     maxCost,
     deadlineMetProbability,
+    successRate: deadlineMetProbability,
     failureRisk,
     withinBudgetProbability,
     riskLevel,
