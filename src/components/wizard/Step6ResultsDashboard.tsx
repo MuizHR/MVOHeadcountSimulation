@@ -198,12 +198,16 @@ export function Step6ResultsDashboard() {
   };
 
   const planningTypeLabel = simulationInputs.planningTypeKey
-    ? planningTypeConfig[simulationInputs.planningTypeKey]?.label || 'Unknown'
-    : 'Unknown';
+    ? planningTypeConfig[simulationInputs.planningTypeKey]?.label
+    : simulationInputs.planningType
+    ? simulationInputs.planningType.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : 'Not specified';
 
   const sizeOfOperationLabel = simulationInputs.sizeOfOperationKey
-    ? sizeOfOperationConfig[simulationInputs.sizeOfOperationKey]?.label || 'Unknown'
-    : 'Unknown';
+    ? sizeOfOperationConfig[simulationInputs.sizeOfOperationKey]?.label
+    : simulationInputs.operationSize
+    ? simulationInputs.operationSize.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : 'Not specified';
 
   if (!simulationResult) {
     const hasNoResults = synchronizedResults.size === 0;
@@ -258,13 +262,13 @@ export function Step6ResultsDashboard() {
             <div className="flex items-center gap-3">
               <Info className="w-6 h-6 text-teal-700" />
               <div>
-                <div className="font-bold text-gray-900 mb-1">Recommended Configuration</div>
+                <div className="font-bold text-gray-900 mb-1">MVO Recommendation (Monte Carlo)</div>
                 <div className="text-sm text-gray-700">
                   {simulationResult.totalFte.toFixed(1)} FTE • ~{simulationResult.avgDurationDays} days Avg, {simulationResult.p90DurationDays} days P90 • {simulationResult.successRatePct.toFixed(1)}% success • RM {Math.round(simulationResult.avgMonthlyCostRm).toLocaleString()}/month
                 </div>
               </div>
             </div>
-            <Tooltip content="This is the simulator's best fit between headcount, time and risk, based on your inputs and Monte Carlo simulation." />
+            <Tooltip content="This is the Minimum Viable Organisation (MVO) recommendation calculated through Monte Carlo simulation. It represents the optimal balance between headcount, delivery time, cost, and risk based on your inputs." />
           </div>
         </div>
 
