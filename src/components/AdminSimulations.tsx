@@ -167,7 +167,10 @@ export const AdminSimulations: React.FC<AdminSimulationsProps> = ({ onNavigate }
 
       {simulations.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <p className="text-gray-600">No simulations found.</p>
+          <p className="text-gray-600 mb-2">No simulations found.</p>
+          <p className="text-sm text-gray-500">
+            Once users click <strong>Save & Complete Simulation</strong> on Step 6, they will appear here.
+          </p>
         </div>
       ) : (
         <>

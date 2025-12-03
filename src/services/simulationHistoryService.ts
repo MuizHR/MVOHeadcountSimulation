@@ -50,7 +50,7 @@ export const simulationHistoryService = {
       .from('simulation_history')
       .select(`
         *,
-        user_profiles!inner(email, full_name)
+        user_profiles(email, full_name)
       `);
 
     if (filters?.search) {
@@ -81,7 +81,12 @@ export const simulationHistoryService = {
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching all simulations:', error);
+      throw error;
+    }
+
+    console.log('Admin query returned:', data?.length || 0, 'simulations');
 
     return (data || []).map((item: any) => ({
       ...item,
