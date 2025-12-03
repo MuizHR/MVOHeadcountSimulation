@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Eye, Copy, Trash2, Mail, FileText, Download } from 'lucide-react';
+import { Eye, Copy, Trash2, FileText, Download, FileSpreadsheet } from 'lucide-react';
 import { SimulationHistory } from '../types/simulationHistory';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { useAuth } from '../contexts/AuthContext';
+import { exportSimulationToWord, exportSimulationToExcel, exportSimulationToPDF } from '../utils/simulationExport';
 
 interface SimulationHistoryCardProps {
   simulation: SimulationHistory;
@@ -22,6 +23,7 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
   const { isAdmin } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -42,6 +44,24 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
       alert('Failed to delete simulation');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleExport = async (format: 'word' | 'excel' | 'pdf') => {
+    setExporting(format);
+    try {
+      if (format === 'word') {
+        await exportSimulationToWord(simulation);
+      } else if (format === 'excel') {
+        await exportSimulationToExcel(simulation);
+      } else if (format === 'pdf') {
+        await exportSimulationToPDF(simulation);
+      }
+    } catch (error) {
+      console.error(`Error exporting to ${format}:`, error);
+      alert(`Failed to export simulation to ${format.toUpperCase()}`);
+    } finally {
+      setExporting(null);
     }
   };
 
@@ -109,34 +129,33 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
           <button
-            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1"
-            title="Email Report"
-          >
-            <Mail className="w-3 h-3" />
-            Email
-          </button>
-          <button
-            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1"
+            onClick={() => handleExport('word')}
+            disabled={exporting !== null}
+            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
             title="Download Word"
           >
             <FileText className="w-3 h-3" />
-            Word
+            {exporting === 'word' ? 'Exporting...' : 'Word'}
           </button>
           <button
-            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1"
+            onClick={() => handleExport('excel')}
+            disabled={exporting !== null}
+            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
             title="Download Excel"
           >
-            <Download className="w-3 h-3" />
-            Excel
+            <FileSpreadsheet className="w-3 h-3" />
+            {exporting === 'excel' ? 'Exporting...' : 'Excel'}
           </button>
           <button
-            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1"
+            onClick={() => handleExport('pdf')}
+            disabled={exporting !== null}
+            className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
             title="Download PDF"
           >
             <Download className="w-3 h-3" />
-            PDF
+            {exporting === 'pdf' ? 'Exporting...' : 'PDF'}
           </button>
         </div>
       </div>

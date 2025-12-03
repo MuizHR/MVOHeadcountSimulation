@@ -47,7 +47,7 @@ export const AdminSimulations: React.FC<AdminSimulationsProps> = ({ onNavigate }
   };
 
   const handleView = (simulation: SimulationHistory) => {
-    alert('[ADMIN MODE] Viewing simulation owned by: ' + (simulation.user_name || simulation.user_email));
+    onNavigate?.('view-simulation', { simulationId: simulation.id });
   };
 
   const handleDuplicate = (simulation: SimulationHistory) => {

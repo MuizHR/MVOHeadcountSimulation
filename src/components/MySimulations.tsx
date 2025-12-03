@@ -47,7 +47,7 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
   };
 
   const handleView = (simulation: SimulationHistory) => {
-    alert('View historical simulation: ' + simulation.simulation_name);
+    onNavigate?.('view-simulation', { simulationId: simulation.id });
   };
 
   const handleDuplicate = (simulation: SimulationHistory) => {

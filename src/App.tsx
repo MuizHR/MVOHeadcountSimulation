@@ -14,15 +14,17 @@ import { MySimulations } from './components/MySimulations';
 import { AdminSimulations } from './components/AdminSimulations';
 import { UserManagement } from './components/UserManagement';
 import { NavBar } from './components/NavBar';
+import { SimulationHistoryViewer } from './components/SimulationHistoryViewer';
 import { supabase } from './lib/supabase';
 
-type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations' | 'userManagement';
+type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations' | 'userManagement' | 'historyViewer';
 
 function AuthenticatedApp() {
   const { user, appUser, signOut, isAdmin } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [refreshKey, setRefreshKey] = useState(0);
   const [userName, setUserName] = useState<string>('');
+  const [selectedSimulationId, setSelectedSimulationId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUserName();
@@ -70,6 +72,11 @@ function AuthenticatedApp() {
     }
   };
 
+  const handleViewSimulation = (simulationId: string) => {
+    setSelectedSimulationId(simulationId);
+    setCurrentView('historyViewer');
+  };
+
   if (currentView === 'landing') {
     return (
       <MOVAProvider>
@@ -103,6 +110,27 @@ function AuthenticatedApp() {
     );
   }
 
+  if (currentView === 'historyViewer' && selectedSimulationId) {
+    return (
+      <MOVAProvider>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+          <NavBar
+            currentView={currentView}
+            userName={userName || user?.email || 'User'}
+            onNavigate={setCurrentView}
+            onSignOut={handleSignOut}
+          />
+          <SimulationHistoryViewer
+            simulationId={selectedSimulationId}
+            onBack={() => setCurrentView('mySimulations')}
+          />
+          <MOVALauncher />
+          <MOVAWindow />
+        </div>
+      </MOVAProvider>
+    );
+  }
+
   if (currentView === 'mySimulations') {
     return (
       <WizardProvider>
@@ -114,7 +142,13 @@ function AuthenticatedApp() {
               onNavigate={setCurrentView}
               onSignOut={handleSignOut}
             />
-            <MySimulations onNavigate={(view) => setCurrentView(view as AppView)} />
+            <MySimulations onNavigate={(view, data) => {
+              if (view === 'view-simulation' && data?.simulationId) {
+                handleViewSimulation(data.simulationId);
+              } else {
+                setCurrentView(view as AppView);
+              }
+            }} />
             <MOVALauncher />
             <MOVAWindow />
           </div>
@@ -134,7 +168,13 @@ function AuthenticatedApp() {
               onNavigate={setCurrentView}
               onSignOut={handleSignOut}
             />
-            <AdminSimulations onNavigate={(view) => setCurrentView(view as AppView)} />
+            <AdminSimulations onNavigate={(view, data) => {
+              if (view === 'view-simulation' && data?.simulationId) {
+                handleViewSimulation(data.simulationId);
+              } else {
+                setCurrentView(view as AppView);
+              }
+            }} />
             <MOVALauncher />
             <MOVAWindow />
           </div>

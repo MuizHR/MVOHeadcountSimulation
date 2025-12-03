@@ -125,7 +125,20 @@ export const simulationHistoryService = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+
+    if (!data) return null;
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('email, full_name')
+      .eq('id', data.user_id)
+      .maybeSingle();
+
+    return {
+      ...data,
+      user_email: profile?.email,
+      user_name: profile?.full_name
+    };
   },
 
   async saveSimulation(simulation: Omit<SimulationHistory, 'id' | 'created_at'>): Promise<SimulationHistory> {
