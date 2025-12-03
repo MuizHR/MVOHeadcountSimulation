@@ -50,7 +50,7 @@ function Tooltip({ content, children }: TooltipProps) {
 }
 
 export function Step6ResultsSynchronized() {
-  const { state, previousStep, reset, synchronizedResults } = useWizard();
+  const { state, previousStep, reset, synchronizedResults, duplicateSimulationId } = useWizard();
   const { simulationInputs, subFunctions } = state;
   const { user } = useAuth();
 
@@ -181,19 +181,33 @@ export function Step6ResultsSynchronized() {
         financialSummary
       };
 
-      await simulationHistoryService.saveSimulation({
-        user_id: user.id,
-        simulation_id: crypto.randomUUID(),
-        simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
-        business_area: simulationInputs.businessArea || 'Not specified',
-        planning_type: simulationInputs.planningTypeKey || 'new_function',
-        size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
-        workload_score: Math.round(workloadScore),
-        total_fte: totalFte,
-        total_monthly_cost: totalMonthlyCost,
-        input_payload: inputPayload,
-        result_payload: resultPayload
-      });
+      if (duplicateSimulationId) {
+        await simulationHistoryService.updateSimulation(duplicateSimulationId, {
+          simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
+          business_area: simulationInputs.businessArea || 'Not specified',
+          planning_type: simulationInputs.planningTypeKey || 'new_function',
+          size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          workload_score: Math.round(workloadScore),
+          total_fte: totalFte,
+          total_monthly_cost: totalMonthlyCost,
+          input_payload: inputPayload,
+          result_payload: resultPayload
+        });
+      } else {
+        await simulationHistoryService.saveSimulation({
+          user_id: user.id,
+          simulation_id: crypto.randomUUID(),
+          simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
+          business_area: simulationInputs.businessArea || 'Not specified',
+          planning_type: simulationInputs.planningTypeKey || 'new_function',
+          size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          workload_score: Math.round(workloadScore),
+          total_fte: totalFte,
+          total_monthly_cost: totalMonthlyCost,
+          input_payload: inputPayload,
+          result_payload: resultPayload
+        });
+      }
 
       setIsSaved(true);
       setShowSaveSuccess(true);

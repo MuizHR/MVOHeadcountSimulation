@@ -174,10 +174,21 @@ export const simulationHistoryService = {
       .eq('id', data.user_id)
       .maybeSingle();
 
+    let parentSimulationName;
+    if (data.parent_simulation_id) {
+      const { data: parent } = await supabase
+        .from('simulation_history')
+        .select('simulation_name')
+        .eq('id', data.parent_simulation_id)
+        .maybeSingle();
+      parentSimulationName = parent?.simulation_name;
+    }
+
     return {
       ...data,
       user_email: profile?.email,
-      user_name: profile?.full_name
+      user_name: profile?.full_name,
+      parent_simulation_name: parentSimulationName
     };
   },
 
@@ -185,6 +196,34 @@ export const simulationHistoryService = {
     const { data, error } = await supabase
       .from('simulation_history')
       .insert(simulation)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateSimulation(
+    id: string,
+    updates: {
+      simulation_name?: string;
+      business_area?: string;
+      planning_type?: string;
+      size_of_operation?: string;
+      workload_score?: number;
+      total_fte?: number;
+      total_monthly_cost?: number;
+      input_payload?: any;
+      result_payload?: any;
+    }
+  ): Promise<SimulationHistory> {
+    const { data, error } = await supabase
+      .from('simulation_history')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
       .select()
       .single();
 

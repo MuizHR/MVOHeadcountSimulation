@@ -25,7 +25,10 @@ interface WizardContextType {
   setMonteCarloInputs: (inputs: MonteCarloInputs) => void;
   synchronizedResults: Map<string, SynchronizedResults>;
   setSynchronizedResults: (results: Map<string, SynchronizedResults>) => void;
+  loadFromSimulation: (inputPayload: any) => void;
   reset: () => void;
+  duplicateSimulationId: string | null;
+  setDuplicateSimulationId: (id: string | null) => void;
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -44,6 +47,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
   const [monteCarloInputs, setMonteCarloInputs] = useState<MonteCarloInputs>(DEFAULT_MONTE_CARLO_INPUTS);
   const [synchronizedResults, setSynchronizedResults] = useState<Map<string, SynchronizedResults>>(new Map());
+  const [duplicateSimulationId, setDuplicateSimulationId] = useState<string | null>(null);
 
   const goToStep = (step: WizardStep) => {
     setState(prev => ({ ...prev, currentStep: step }));
@@ -125,8 +129,37 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, isCalculated: calculated }));
   };
 
+  const loadFromSimulation = (inputPayload: any) => {
+    if (!inputPayload) return;
+
+    const { simulationInputs, subFunctions } = inputPayload;
+
+    if (simulationInputs) {
+      setState(prev => ({
+        ...prev,
+        simulationInputs: { ...DEFAULT_SIMULATION_INPUTS, ...simulationInputs },
+      }));
+    }
+
+    if (subFunctions && Array.isArray(subFunctions)) {
+      setState(prev => ({
+        ...prev,
+        subFunctions: subFunctions.map((sf: any) => ({
+          id: sf.id || crypto.randomUUID(),
+          name: sf.name || 'Unnamed Function',
+          workTypes: sf.workTypes || {},
+          currentFTE: sf.currentFTE || 0,
+          template: sf.template || null,
+        })),
+      }));
+    }
+  };
+
   const reset = () => {
     setState(INITIAL_STATE);
+    setSynchronizedResults(new Map());
+    setMonteCarloInputs(DEFAULT_MONTE_CARLO_INPUTS);
+    setDuplicateSimulationId(null);
   };
 
   return (
@@ -151,7 +184,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setMonteCarloInputs,
         synchronizedResults,
         setSynchronizedResults,
+        loadFromSimulation,
         reset,
+        duplicateSimulationId,
+        setDuplicateSimulationId,
       }}
     >
       {children}

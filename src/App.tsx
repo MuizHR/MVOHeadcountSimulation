@@ -218,14 +218,7 @@ function AuthenticatedApp() {
               onNavigate={setCurrentView}
               onSignOut={handleSignOut}
             />
-            <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
-              <div className="max-w-7xl mx-auto">
-                <p className="text-sm text-blue-800">
-                  <strong>Duplicate Mode:</strong> This scenario has been duplicated. You can modify any details and save it as a new simulation.
-                </p>
-              </div>
-            </div>
-            <WizardContainer />
+            <WizardContainer duplicateSimulationId={selectedSimulationId} />
             <MOVALauncher />
             <MOVAWindow />
           </div>
