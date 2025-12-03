@@ -160,13 +160,7 @@ export function Step6ResultsSynchronized() {
 
       const inputPayload = {
         simulationInputs,
-        subFunctions: subFunctions.map(sf => ({
-          id: sf.id,
-          name: sf.name,
-          workTypes: sf.workTypes,
-          currentFTE: sf.currentFTE,
-          template: sf.template
-        }))
+        subFunctions
       };
 
       const resultPayload = {

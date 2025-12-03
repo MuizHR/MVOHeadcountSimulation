@@ -144,13 +144,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     if (subFunctions && Array.isArray(subFunctions)) {
       setState(prev => ({
         ...prev,
-        subFunctions: subFunctions.map((sf: any) => ({
-          id: sf.id || crypto.randomUUID(),
-          name: sf.name || 'Unnamed Function',
-          workTypes: sf.workTypes || {},
-          currentFTE: sf.currentFTE || 0,
-          template: sf.template || null,
-        })),
+        subFunctions,
       }));
     }
   };
