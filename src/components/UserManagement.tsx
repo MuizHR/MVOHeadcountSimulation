@@ -47,21 +47,32 @@ export const UserManagement: React.FC = () => {
 
   const handleUpdateRole = async (userId: string, newRole: 'admin' | 'user') => {
     try {
-      const { error } = await supabase
+      console.log('Updating user role:', { userId, newRole });
+
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      console.log('Update successful:', data);
 
       setUsers(prev =>
         prev.map(u => (u.id === userId ? { ...u, role: newRole } : u))
       );
       setEditingUserId(null);
-      alert('User role updated successfully!');
-    } catch (error) {
+
+      await loadUsers();
+
+      alert(`User role updated successfully to ${newRole}!`);
+    } catch (error: any) {
       console.error('Error updating role:', error);
-      alert('Failed to update user role');
+      alert(`Failed to update user role: ${error.message || 'Unknown error'}`);
     }
   };
 
