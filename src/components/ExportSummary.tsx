@@ -86,6 +86,13 @@ export function ExportSummary({ inputs, scenarios, selectedScenario, onClose }: 
       .join(' ');
   };
 
+  const getFunctionDisplayName = (): string => {
+    if (inputs.isCustomFunction && inputs.customFunctionName) {
+      return inputs.customFunctionName;
+    }
+    return formatLabel(inputs.functionType);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', maximumFractionDigits: 0 }).format(amount);
   };
@@ -152,7 +159,7 @@ export function ExportSummary({ inputs, scenarios, selectedScenario, onClose }: 
               </div>
               <div>
                 <p className="text-sm text-gray-600">Function Type</p>
-                <p className="font-semibold text-gray-900">{formatLabel(inputs.functionType)}</p>
+                <p className="font-semibold text-gray-900">{getFunctionDisplayName()}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Nature of Work</p>

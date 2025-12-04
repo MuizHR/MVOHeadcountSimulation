@@ -53,6 +53,8 @@ export interface SimulationInputs {
   sizeOfOperationKey?: SizeOfOperationKey;
   contextNotes?: string;
   functionType: FunctionType;
+  isCustomFunction?: boolean;
+  customFunctionName?: string;
   natureOfWork: WorkNature;
   projectLength: number;
   totalProjectValue: number;

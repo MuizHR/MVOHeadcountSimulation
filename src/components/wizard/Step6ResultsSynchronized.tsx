@@ -49,6 +49,25 @@ function Tooltip({ content, children }: TooltipProps) {
   );
 }
 
+const FUNCTION_OPTIONS: { value: string; label: string }[] = [
+  { value: 'cleaning_housekeeping', label: 'Cleaning & Housekeeping' },
+  { value: 'corporate_communication', label: 'Corporate Communication' },
+  { value: 'customer_stakeholder_management', label: 'Customer & Stakeholder Management' },
+  { value: 'finance_accounting', label: 'Finance & Accounting' },
+  { value: 'governance_risk_compliance', label: 'Governance, Risk & Compliance (GRC)' },
+  { value: 'hr', label: 'Human Resources' },
+  { value: 'it', label: 'Information Technology' },
+  { value: 'legal_company_secretarial', label: 'Legal & Company Secretarial' },
+  { value: 'maintenance_engineering', label: 'Maintenance & Engineering' },
+  { value: 'operations_service_delivery', label: 'Operations & Service Delivery' },
+  { value: 'procurement_vendor_management', label: 'Procurement & Vendor Management' },
+  { value: 'project_development_management', label: 'Project & Development Management' },
+  { value: 'property_facilities_management', label: 'Property & Facilities Management' },
+  { value: 'property_investment', label: 'Property Investment' },
+  { value: 'sales_leasing_tenancy', label: 'Sales, Leasing & Tenancy' },
+  { value: 'security_safety', label: 'Security & Safety' },
+];
+
 export function Step6ResultsSynchronized() {
   const { state, previousStep, reset, synchronizedResults, duplicateSimulationId } = useWizard();
   const { simulationInputs, subFunctions } = state;
@@ -175,10 +194,14 @@ export function Step6ResultsSynchronized() {
         financialSummary
       };
 
+      const businessArea = simulationInputs.isCustomFunction && simulationInputs.customFunctionName
+        ? simulationInputs.customFunctionName
+        : FUNCTION_OPTIONS.find(f => f.value === simulationInputs.functionType)?.label || 'Not specified';
+
       if (duplicateSimulationId) {
         await simulationHistoryService.updateSimulation(duplicateSimulationId, {
           simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
-          business_area: simulationInputs.businessArea || 'Not specified',
+          business_area: businessArea,
           planning_type: simulationInputs.planningTypeKey || 'new_function',
           size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
           workload_score: Math.round(workloadScore),
@@ -192,7 +215,7 @@ export function Step6ResultsSynchronized() {
           user_id: user.id,
           simulation_id: crypto.randomUUID(),
           simulation_name: simulationInputs.simulationName || 'Untitled Simulation',
-          business_area: simulationInputs.businessArea || 'Not specified',
+          business_area: businessArea,
           planning_type: simulationInputs.planningTypeKey || 'new_function',
           size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
           workload_score: Math.round(workloadScore),
