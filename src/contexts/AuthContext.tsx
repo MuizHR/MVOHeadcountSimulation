@@ -43,12 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       if (data) {
+        console.log('AuthContext - Loading user profile:', data);
         setAppUser({
           id: data.id,
           email: data.email,
           name: data.full_name,
           role: (data.role as UserRole) || 'user'
         });
+        console.log('AuthContext - Set appUser role to:', data.role);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);

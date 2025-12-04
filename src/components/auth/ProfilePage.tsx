@@ -44,15 +44,17 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
     if (!user) return;
 
     try {
+      const timestamp = Date.now();
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(`*, _cache_buster:created_at`)
         .eq('id', user.id)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
+        console.log('Loaded profile data:', data);
         setProfile(data);
         setFormData({
           full_name: data.full_name || '',
@@ -100,10 +102,37 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refreshProfile();
-      await loadProfile();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        alert('Error refreshing profile: ' + error.message);
+        return;
+      }
+
+      if (data) {
+        console.log('Fresh profile data from database:', data);
+        setProfile(data);
+        setFormData({
+          full_name: data.full_name || '',
+          company: data.company || '',
+          department: data.department || '',
+          job_title: data.job_title || '',
+        });
+
+        await refreshProfile();
+
+        alert(`Profile refreshed!\nRole: ${data.role}\nName: ${data.full_name}`);
+      }
     } catch (error) {
       console.error('Error refreshing profile:', error);
+      alert('Failed to refresh profile');
     } finally {
       setRefreshing(false);
     }
