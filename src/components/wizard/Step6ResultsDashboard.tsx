@@ -14,6 +14,8 @@ import { simulationHistoryService } from '../../services/simulationHistoryServic
 import { SimulationResult } from '../../types/dashboardResult';
 import { planningTypeConfig, sizeOfOperationConfig } from '../../types/planningConfig';
 import { exportToWord, exportToPDF, exportToExcel, ExportData } from '../../utils/resultsExporter';
+import { serializeReportData } from '../../utils/reportSerializer';
+import { sendReportToPowerAutomate } from '../../utils/powerAutomateService';
 
 interface TooltipProps {
   content: string;
@@ -273,6 +275,39 @@ export function Step6ResultsDashboard() {
     }
   };
 
+  const handleSendReportViaEmail = async () => {
+    if (!user) {
+      alert('You must be logged in to send reports');
+      return;
+    }
+
+    const userEmail = user.email || '';
+
+    setIsSendingEmail(true);
+
+    try {
+      const reportData = serializeReportData(
+        simulationInputs,
+        subFunctions,
+        synchronizedResults,
+        userEmail
+      );
+
+      const result = await sendReportToPowerAutomate(reportData);
+
+      if (result.success) {
+        alert('Report successfully sent via email! Please check your inbox.');
+      } else {
+        alert(`Failed to send report: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error sending report via email:', error);
+      alert('Failed to send report. Please try again.');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   if (!simulationResult) {
     const hasNoResults = synchronizedResults.size === 0;
 
@@ -359,9 +394,9 @@ export function Step6ResultsDashboard() {
             Export Excel
           </button>
           <button
-            onClick={() => alert('Send via Email - Coming soon')}
+            onClick={handleSendReportViaEmail}
             disabled={isSendingEmail}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium disabled:bg-gray-400"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
           >
             <Mail className="w-4 h-4" />
             {isSendingEmail ? 'Sending...' : 'Send Report via Email'}
