@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Briefcase, Mail, Calendar, Save, Shield } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Calendar, Save, Shield, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -22,10 +22,11 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: ProfilePageProps) {
-  const { user, appUser, isAdmin } = useAuth();
+  const { user, appUser, isAdmin, refreshProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -96,6 +97,18 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshProfile();
+      await loadProfile();
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -126,12 +139,23 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
               {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
-                >
-                  Edit Profile
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
+                    title="Refresh profile data"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
+                  >
+                    Edit Profile
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <button
