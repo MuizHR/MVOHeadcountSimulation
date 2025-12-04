@@ -7,6 +7,25 @@ import { fetchAllStaffTypes } from '../../services/staffTypeService';
 import { categorizeWorkByName } from '../../types/workType';
 import { generateWorkTypeAwareRoleComposition } from '../../utils/workTypeRoleComposition';
 
+const FUNCTION_OPTIONS: { value: string; label: string }[] = [
+  { value: 'cleaning_housekeeping', label: 'Cleaning & Housekeeping' },
+  { value: 'corporate_communication', label: 'Corporate Communication' },
+  { value: 'customer_stakeholder_management', label: 'Customer & Stakeholder Management' },
+  { value: 'finance_accounting', label: 'Finance & Accounting' },
+  { value: 'governance_risk_compliance', label: 'Governance, Risk & Compliance (GRC)' },
+  { value: 'hr', label: 'Human Resources' },
+  { value: 'it', label: 'Information Technology' },
+  { value: 'legal_company_secretarial', label: 'Legal & Company Secretarial' },
+  { value: 'maintenance_engineering', label: 'Maintenance & Engineering' },
+  { value: 'operations_service_delivery', label: 'Operations & Service Delivery' },
+  { value: 'procurement_vendor_management', label: 'Procurement & Vendor Management' },
+  { value: 'project_development_management', label: 'Project & Development Management' },
+  { value: 'property_facilities_management', label: 'Property & Facilities Management' },
+  { value: 'property_investment', label: 'Property Investment' },
+  { value: 'sales_leasing_tenancy', label: 'Sales, Leasing & Tenancy' },
+  { value: 'security_safety', label: 'Security & Safety' },
+];
+
 export function Step5Review() {
   const {
     state,
@@ -19,6 +38,14 @@ export function Step5Review() {
   const { simulationInputs, subFunctions } = state;
 
   const [isCalculating, setIsCalculating] = useState(false);
+
+  const getFunctionDisplayName = (): string => {
+    if (simulationInputs.isCustomFunction && simulationInputs.customFunctionName) {
+      return simulationInputs.customFunctionName;
+    }
+    return FUNCTION_OPTIONS.find(f => f.value === simulationInputs.functionType)?.label ||
+           simulationInputs.functionType.replace('_', ' ');
+  };
 
   const handleCalculate = async () => {
     setIsCalculating(true);
@@ -96,8 +123,8 @@ export function Step5Review() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Function:</span>
-                <span className="font-medium text-gray-900 capitalize">
-                  {simulationInputs.functionType.replace('_', ' ')}
+                <span className="font-medium text-gray-900">
+                  {getFunctionDisplayName()}
                 </span>
               </div>
               <div className="flex justify-between">
