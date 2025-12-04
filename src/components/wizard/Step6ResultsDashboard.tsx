@@ -13,6 +13,7 @@ import { fetchAllStaffTypes } from '../../services/staffTypeService';
 import { simulationHistoryService } from '../../services/simulationHistoryService';
 import { SimulationResult } from '../../types/dashboardResult';
 import { planningTypeConfig, sizeOfOperationConfig } from '../../types/planningConfig';
+import { exportToWord, exportToPDF, exportToExcel, ExportData } from '../../utils/resultsExporter';
 
 interface TooltipProps {
   content: string;
@@ -203,6 +204,52 @@ export function Step6ResultsDashboard() {
     ? simulationInputs.operationSize.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : 'Not specified';
 
+  const getExportData = (): ExportData => {
+    if (!simulationResult) {
+      throw new Error('No simulation result available');
+    }
+    return {
+      simulationName: simulationResult.simulationName,
+      planningType: planningTypeLabel,
+      sizeOfOperation: sizeOfOperationLabel,
+      totalFte: simulationResult.totalFte,
+      avgDurationDays: simulationResult.avgDurationDays,
+      p90DurationDays: simulationResult.p90DurationDays,
+      successRatePct: simulationResult.successRatePct,
+      avgMonthlyCostRm: simulationResult.avgMonthlyCostRm
+    };
+  };
+
+  const handleExportWord = async () => {
+    try {
+      const data = getExportData();
+      await exportToWord(data);
+    } catch (error) {
+      console.error('Export to Word failed:', error);
+      alert('Failed to export to Word. Please try again.');
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const data = getExportData();
+      exportToPDF(data);
+    } catch (error) {
+      console.error('Export to PDF failed:', error);
+      alert('Failed to export to PDF. Please try again.');
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      const data = getExportData();
+      exportToExcel(data);
+    } catch (error) {
+      console.error('Export to Excel failed:', error);
+      alert('Failed to export to Excel. Please try again.');
+    }
+  };
+
   if (!simulationResult) {
     const hasNoResults = synchronizedResults.size === 0;
 
@@ -268,21 +315,21 @@ export function Step6ResultsDashboard() {
 
         <div className="flex flex-wrap gap-3 mb-6">
           <button
-            onClick={() => alert('Export to Word - Coming soon')}
+            onClick={handleExportWord}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <FileText className="w-4 h-4" />
             Export Word
           </button>
           <button
-            onClick={() => alert('Export to PDF - Coming soon')}
+            onClick={handleExportPDF}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
           >
             <FileDown className="w-4 h-4" />
             Export PDF
           </button>
           <button
-            onClick={() => alert('Export to Excel - Coming soon')}
+            onClick={handleExportExcel}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
           >
             <FileSpreadsheet className="w-4 h-4" />
