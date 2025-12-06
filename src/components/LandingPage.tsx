@@ -56,7 +56,7 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
               <Users className="w-6 h-6 text-white" />
             </div>
             <div>
-              <div className="text-text-main font-bold text-lg">JLG Group</div>
+              <div className="text-text-main font-bold text-lg">JLG</div>
               <div className="text-primary text-xs font-medium">MVO & Headcount Simulator</div>
             </div>
           </div>
