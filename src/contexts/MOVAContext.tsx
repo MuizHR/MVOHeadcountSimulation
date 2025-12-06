@@ -100,77 +100,57 @@ export const faqItems: FAQItem[] = [
   {
     id: 'fte-calculation',
     icon: '👥',
-    question: 'How do I calculate FTE accurately?',
-    tooltip: 'Learn the formula and assumptions used to estimate staffing levels.'
+    question: 'How does this app calculate FTE?',
+    tooltip: 'Explain FTE logic, part-timers, contractors and how the simulator uses them.'
   },
   {
     id: 'mvo-flow',
     icon: '📋',
-    question: 'What is the full MVO simulation flow?',
-    tooltip: 'Understand the step-by-step process behind the simulator.'
+    question: 'How does the 6-step MVO simulation flow work?',
+    tooltip: 'Explain the steps Context → Setup → Workload → Model → Review → Results and when to use each.'
   },
   {
-    id: 'optimize-cost',
+    id: 'manpower-cost',
     icon: '💰',
-    question: 'How do I optimize manpower cost?',
-    tooltip: 'See cost levers like automation, outsourcing, and role mix.'
+    question: 'How are manpower costs calculated in this simulation?',
+    tooltip: 'Salary bands, allowances, benefits, on-cost %, what is included/excluded.'
   },
   {
-    id: 'automation',
-    icon: '🤖',
-    question: 'What tasks can be automated or outsourced?',
-    tooltip: 'Identify tasks suitable for automation or external vendors.'
-  },
-  {
-    id: 'team-structure',
-    icon: '🏗️',
-    question: 'How do I design the right team structure?',
-    tooltip: 'Learn how to create a Minimum Viable Organization design.'
-  },
-  {
-    id: 'risk-buffer',
+    id: 'risk-level',
     icon: '🛡️',
-    question: 'What is workforce risk buffer?',
-    tooltip: 'Understand the safety margin for avoiding under-capacity.'
+    question: 'What do Risk Level and Risk Buffer mean in the results?',
+    tooltip: 'Risk rating, buffer FTE, and how they relate to service failure/compliance risk.'
   }
 ];
 
 export const quickActions: QuickAction[] = [
   {
-    id: 'fte-simulation',
-    icon: '⚡',
-    label: 'Run FTE Simulation',
-    prompt: 'I need to run an FTE simulation. Can you guide me through the process and help me calculate the required headcount?'
+    id: 'fte-summary',
+    icon: '👥',
+    label: 'Run FTE Summary',
+    prompt: 'Using the current simulation, summarise baseline vs MVO vs proposed FTE by function and role, and highlight any critical gaps or over-staffed areas.',
+    tooltip: 'Summarise baseline vs MVO vs proposed FTE for this simulation.'
   },
   {
-    id: 'calculate-productivity',
-    icon: '🧮',
-    label: 'Calculate Productivity',
-    prompt: 'I need help calculating productivity metrics and throughput per role. Can you assist?'
+    id: 'manpower-cost',
+    icon: '💰',
+    label: 'Analyse Manpower Cost',
+    prompt: 'Using this simulation, break down manpower cost by function, role and grade. Show total baseline vs proposed cost, and highlight any savings or increases.',
+    tooltip: 'Break down manpower cost and show savings or increases.'
   },
   {
-    id: 'automation-potential',
-    icon: '🤖',
-    label: 'Check Automation Potential',
-    prompt: 'Can you analyze which tasks in my workflow have automation potential and estimate the impact?'
-  },
-  {
-    id: 'summary-report',
+    id: 'productivity-capacity',
     icon: '📊',
-    label: 'Generate Summary Report',
-    prompt: 'Please generate a summary report of our current workforce planning analysis including FTE, costs, and recommendations.'
+    label: 'Check Productivity & Capacity',
+    prompt: 'Using workload and FTE data from this simulation, calculate productivity per FTE and compare to benchmarks. Flag any functions that are under-capacity or over-capacity.',
+    tooltip: 'Check workload per FTE against benchmarks.'
   },
   {
-    id: 'mvo-structure',
-    icon: '🧱',
-    label: 'Build MVO Structure',
-    prompt: 'Help me design a Minimum Viable Organization structure for my team/function.'
-  },
-  {
-    id: 'review-assumptions',
-    icon: '🛠️',
-    label: 'Review Assumptions',
-    prompt: 'Can you review all the assumptions I\'ve entered so far and highlight any that might need adjustment?'
+    id: 'management-summary',
+    icon: '📋',
+    label: 'Generate Management Summary',
+    prompt: 'Generate a concise, management-ready summary of this simulation: context, baseline vs MVO vs proposed FTE, manpower cost impact, risk level, and a clear recommended decision.',
+    tooltip: 'Create a management-ready summary of this simulation.'
   }
 ];
 

@@ -1,12 +1,10 @@
 export type MOVAPersona = 'expert' | 'advisor' | 'analyst';
 
 export type QuickActionType =
-  | 'fte-simulation'
-  | 'calculate-productivity'
-  | 'automation-potential'
-  | 'summary-report'
-  | 'mvo-structure'
-  | 'review-assumptions';
+  | 'fte-summary'
+  | 'manpower-cost'
+  | 'productivity-capacity'
+  | 'management-summary';
 
 export interface MOVAMessage {
   id: string;
@@ -84,6 +82,7 @@ export interface QuickAction {
   icon: string;
   label: string;
   prompt: string;
+  tooltip: string;
 }
 
 export interface AnalyticsEvent {
