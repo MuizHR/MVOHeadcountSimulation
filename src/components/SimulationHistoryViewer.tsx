@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, User, Briefcase } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Briefcase, Lock } from 'lucide-react';
 import { SimulationHistory } from '../types/simulationHistory';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { useAuth } from '../contexts/AuthContext';
-import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
+import { planningTypeConfig, sizeOfOperationConfig, PlanningTypeKey, SizeOfOperationKey } from '../types/planningConfig';
 
 interface SimulationHistoryViewerProps {
   simulationId: string;
   onBack: () => void;
 }
+
+const ReadOnlyBadge = () => (
+  <div className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-2 rounded-lg shadow-sm">
+    <Lock className="w-5 h-5" />
+    <span className="font-semibold text-sm">Read-Only View</span>
+  </div>
+);
 
 export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHistoryViewerProps) {
   const { isAdmin } = useAuth();
@@ -146,26 +153,98 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
           <div className="p-8">
             {activeTab === 0 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Planning Context</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Planning Type</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900">
-                      {simulation.planning_type ? getPlanningTypeLabel(simulation.planning_type) : 'Not specified'}
+                    <h2 className="text-2xl font-bold text-gray-900">Planning Context</h2>
+                    <p className="text-gray-600 mt-1">Define the scope and purpose of your workforce planning</p>
+                  </div>
+                  <ReadOnlyBadge />
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Simulation Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={simulation.simulation_name}
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-3">
+                      Planning Type <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(Object.keys(planningTypeConfig) as PlanningTypeKey[]).map((key) => {
+                        const config = planningTypeConfig[key];
+                        const isSelected = simulation.planning_type === key;
+                        return (
+                          <div
+                            key={key}
+                            className={`p-4 rounded-lg border-2 cursor-not-allowed ${
+                              isSelected
+                                ? 'border-cyan-500 bg-cyan-50'
+                                : 'border-gray-200 bg-gray-50 opacity-60'
+                            }`}
+                          >
+                            <div className="font-semibold text-gray-900">{config.label}</div>
+                            <div className="text-sm text-gray-600 mt-1">{config.description}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {simulation.planning_type && (
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <span className="text-blue-700 text-sm">
+                            {planningTypeConfig[simulation.planning_type as PlanningTypeKey]?.tooltip}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-3">
+                      Size of Operation <span className="text-red-500">*</span>
+                    </label>
+                    <div className="space-y-3">
+                      {(Object.keys(sizeOfOperationConfig) as SizeOfOperationKey[]).map((key) => {
+                        const config = sizeOfOperationConfig[key];
+                        const isSelected = simulation.size_of_operation === key;
+                        return (
+                          <div
+                            key={key}
+                            className={`p-4 rounded-lg border-2 cursor-not-allowed ${
+                              isSelected
+                                ? 'border-cyan-500 bg-cyan-50'
+                                : 'border-gray-200 bg-gray-50 opacity-60'
+                            }`}
+                          >
+                            <div className="font-semibold text-gray-900">{config.label}</div>
+                            <div className="text-sm text-gray-600 mt-1">{config.description}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Size of Operation</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900">
-                      {simulation.size_of_operation ? getSizeOfOperationLabel(simulation.size_of_operation) : 'Not specified'}
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Area</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900">
-                      {simulation.business_area || 'Not specified'}
-                    </div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Content & Objectives <span className="text-gray-500 text-xs">(Optional)</span>
+                    </label>
+                    <textarea
+                      value={simulationInputs.contextObjectives || ''}
+                      disabled
+                      rows={4}
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 cursor-not-allowed resize-none"
+                      placeholder="No objectives specified"
+                    />
                   </div>
                 </div>
               </div>
@@ -173,7 +252,10 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 1 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Function Setup</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Function Setup</h2>
+                  <ReadOnlyBadge />
+                </div>
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
                   <div className="space-y-4">
                     {subFunctions.map((sf: any, index: number) => (
@@ -200,7 +282,10 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 2 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Workload Drivers</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Workload Drivers</h2>
+                  <ReadOnlyBadge />
+                </div>
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
                   <div className="space-y-4">
                     {subFunctions.map((sf: any, index: number) => (
@@ -231,7 +316,10 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 3 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Operating Model</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
+                  <ReadOnlyBadge />
+                </div>
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
                   <div className="space-y-4">
                     {subFunctions.map((sf: any, index: number) => (
@@ -262,7 +350,10 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 4 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Review Summary</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Review Summary</h2>
+                  <ReadOnlyBadge />
+                </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-blue-900 mb-4">Summary Metrics</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -289,11 +380,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900">Simulation Results</h2>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
-                    <p className="text-sm text-yellow-800 font-medium">
-                      Read-Only View
-                    </p>
-                  </div>
+                  <ReadOnlyBadge />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
