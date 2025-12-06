@@ -349,7 +349,14 @@ function AuthFlow() {
 
 export default function App() {
   return (
-    <div style={{ padding: 40, color: 'white', fontSize: 24 }}>
+    <div
+      style={{
+        padding: 40,
+        backgroundColor: '#111827',  // dark background
+        color: 'white',               // white text
+        fontSize: 24,
+      }}
+    >
       MVO App test – if you see this, React is working.
     </div>
   );
