@@ -1,328 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, User, Briefcase, Lock, Info, Check, Sparkles } from 'lucide-react';
-import { SimulationHistory } from '../types/simulationHistory';
-import { simulationHistoryService } from '../services/simulationHistoryService';
-import { useAuth } from '../contexts/AuthContext';
-import { planningTypeConfig, sizeOfOperationConfig, PlanningTypeKey, SizeOfOperationKey } from '../types/planningConfig';
+import React, { useState } from 'react';
+import { X, Calendar, User, Briefcase, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { KPICards } from './dashboard/KPICards';
+import { SystemRoleCompositionPanel } from './dashboard/SystemRoleCompositionPanel';
+import { SubFunctionAccordion } from './dashboard/SubFunctionAccordion';
+import { HeadcountComparisonTable } from './dashboard/HeadcountComparisonTable';
+import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
 
 interface SimulationHistoryViewerProps {
-  simulationId: string;
-  onBack: () => void;
+  simulation: any;
+  onClose: () => void;
 }
 
-const ReadOnlyBadge = () => (
-  <div className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-2 rounded-lg shadow-sm">
-    <Lock className="w-5 h-5" />
-    <span className="font-semibold text-sm">Read-Only View</span>
-  </div>
-);
+function ReadOnlyBadge() {
+  return (
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-md">
+      <Info className="w-4 h-4 text-amber-700" />
+      <span className="text-sm font-medium text-amber-900">Read-Only View</span>
+    </div>
+  );
+}
 
-const FUNCTION_OPTIONS: { value: string; label: string }[] = [
-  { value: 'cleaning_housekeeping', label: 'Cleaning & Housekeeping' },
-  { value: 'corporate_communication', label: 'Corporate Communication' },
-  { value: 'customer_stakeholder_management', label: 'Customer & Stakeholder Management' },
-  { value: 'finance_accounting', label: 'Finance & Accounting' },
-  { value: 'governance_risk_compliance', label: 'Governance, Risk & Compliance (GRC)' },
-  { value: 'hr', label: 'Human Resources' },
-  { value: 'it', label: 'Information Technology' },
-  { value: 'legal_company_secretarial', label: 'Legal & Company Secretarial' },
-  { value: 'maintenance_engineering', label: 'Maintenance & Engineering' },
-  { value: 'operations_service_delivery', label: 'Operations & Service Delivery' },
-  { value: 'procurement_vendor_management', label: 'Procurement & Vendor Management' },
-  { value: 'project_development_management', label: 'Project & Development Management' },
-  { value: 'property_facilities_management', label: 'Property & Facilities Management' },
-  { value: 'property_investment', label: 'Property Investment' },
-  { value: 'sales_leasing_tenancy', label: 'Sales, Leasing & Tenancy' },
-  { value: 'security_safety', label: 'Security & Safety' },
-];
+interface QuestionCardProps {
+  title: string;
+  number: number;
+  help?: string;
+  children: React.ReactNode;
+}
 
-export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHistoryViewerProps) {
-  const { isAdmin } = useAuth();
-  const [simulation, setSimulation] = useState<SimulationHistory | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<number>(0);
-
-  useEffect(() => {
-    loadSimulation();
-  }, [simulationId]);
-
-  const loadSimulation = async () => {
-    setLoading(true);
-    try {
-      const data = await simulationHistoryService.getSimulationById(simulationId);
-      setSimulation(data);
-    } catch (error) {
-      console.error('Error loading simulation:', error);
-      alert('Failed to load simulation');
-      onBack();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-600 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading simulation...</p>
+function QuestionCard({ title, number, help, children }: QuestionCardProps) {
+  return (
+    <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+          {number}
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
+          {help && (
+            <div className="flex items-start gap-2 mt-2">
+              <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-600">{help}</p>
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
+      {children}
+    </div>
+  );
+}
 
-  if (!simulation) {
-    return null;
-  }
+interface OptionDisplayProps {
+  selected: boolean;
+  children: React.ReactNode;
+}
+
+function OptionDisplay({ selected, children }: OptionDisplayProps) {
+  return (
+    <div
+      className={`
+        w-full p-4 rounded-lg border-2 text-left font-medium cursor-not-allowed
+        ${
+          selected
+            ? 'border-teal-600 bg-teal-50 text-teal-900'
+            : 'border-gray-300 bg-gray-100 text-gray-500'
+        }
+      `}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function SimulationHistoryViewer({ simulation, onClose }: SimulationHistoryViewerProps) {
+  const [activeTab, setActiveTab] = useState(0);
+  const [expandedSubFunctions, setExpandedSubFunctions] = useState<Record<number, boolean>>({});
 
   const inputPayload = simulation.input_payload || {};
   const resultPayload = simulation.result_payload || {};
-
   const simulationInputs = inputPayload.simulationInputs || {};
   const subFunctions = inputPayload.subFunctions || [];
-  const synchronizedResults = resultPayload.synchronizedResults || [];
-
-  const getFunctionDisplayName = (): string => {
-    if (simulationInputs.isCustomFunction && simulationInputs.customFunctionName) {
-      return simulationInputs.customFunctionName;
-    }
-    return FUNCTION_OPTIONS.find(f => f.value === simulationInputs.functionType)?.label ||
-           simulationInputs.functionType?.replace(/_/g, ' ') || 'Not specified';
-  };
+  const simulationResult = resultPayload.simulationResult || null;
 
   const tabs = [
-    { id: 0, label: 'Context' },
-    { id: 1, label: 'Setup' },
-    { id: 2, label: 'Workload' },
-    { id: 3, label: 'Model' },
-    { id: 4, label: 'Review' },
-    { id: 5, label: 'Results' }
+    { id: 0, label: 'Context', sublabel: 'Planning scope and objectives' },
+    { id: 1, label: 'Setup', sublabel: 'Functions and sub-functions' },
+    { id: 2, label: 'Workload', sublabel: 'Volume and complexity' },
+    { id: 3, label: 'Model', sublabel: 'Structure and delivery' },
+    { id: 4, label: 'Review', sublabel: 'Validate and calculate' },
+    { id: 5, label: 'Results', sublabel: 'FTE recommendations' },
   ];
 
+  const planningTypeLabel = simulationInputs.planningTypeKey
+    ? planningTypeConfig[simulationInputs.planningTypeKey]?.label
+    : 'Not specified';
+
+  const sizeOfOperationLabel = simulationInputs.sizeOfOperationKey
+    ? sizeOfOperationConfig[simulationInputs.sizeOfOperationKey]?.label
+    : 'Not specified';
+
+  const businessArea = simulation.business_area || 'Not specified';
+
+  const toggleSubFunction = (index: number) => {
+    setExpandedSubFunctions(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 30) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Simulations
-        </button>
-
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {simulation.simulation_name}
-              </h1>
-              <p className="text-gray-600">Viewing saved simulation (Read-Only)</p>
-            </div>
-            {isAdmin() && simulation.created_by_email && (
-              <div className="text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>Created by: {simulation.created_by_email}</span>
-                </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">{simulation.simulation_name}</h2>
+            <div className="flex items-center gap-4 mt-1 text-sm text-teal-50">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{formatDate(simulation.created_at)}</span>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date(simulation.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}</span>
-            </div>
-            {simulation.business_area && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Briefcase className="w-4 h-4" />
-                <span>{simulation.business_area}</span>
+                <span>{businessArea}</span>
               </div>
-            )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="border-b border-gray-200 bg-gray-50">
+          <div className="flex overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex-shrink-0 px-6 py-4 text-left border-b-2 transition-colors min-w-[140px]
+                  ${
+                    activeTab === tab.id
+                      ? 'border-teal-600 bg-white'
+                      : 'border-transparent hover:bg-gray-100'
+                  }
+                `}
+              >
+                <div
+                  className={`
+                    text-sm font-semibold
+                    ${activeTab === tab.id ? 'text-teal-700' : 'text-gray-600'}
+                  `}
+                >
+                  {tab.label}
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">{tab.sublabel}</div>
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-b-2 border-cyan-600 text-cyan-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="p-8">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-6xl mx-auto">
             {activeTab === 0 && (
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Planning Context</h2>
-                    <p className="text-gray-600 mt-1">
-                      Define the scope and purpose of your workforce planning
-                    </p>
-                  </div>
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <h2 className="text-2xl font-bold text-gray-900">Planning Context</h2>
                   <ReadOnlyBadge />
                 </div>
 
                 <div className="space-y-6">
-                  <div>
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Simulation Name *
+                      Simulation Name
                     </label>
-                    <input
-                      type="text"
-                      value={simulation.simulation_name}
-                      disabled
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 cursor-not-allowed"
-                    />
-                    <div className="flex items-start gap-2 mt-2">
-                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-500">
-                        Give your simulation a descriptive name for easy reference
-                      </p>
+                    <div className="text-lg font-medium text-gray-900">
+                      {simulation.simulation_name}
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Planning Type *
-                      </label>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.keys(planningTypeConfig).map((key) => {
-                        const config = planningTypeConfig[key as PlanningTypeKey];
-                        const isSelected = simulation.planning_type === key;
-                        return (
-                          <div
-                            key={key}
-                            className={`
-                              p-4 rounded-lg border-2 cursor-not-allowed
-                              ${
-                                isSelected
-                                  ? 'border-teal-600 bg-teal-50'
-                                  : 'border-gray-200 bg-gray-50 opacity-60'
-                              }
-                            `}
-                          >
-                            <div className="font-semibold text-gray-900 mb-1">
-                              {config.label}
-                            </div>
-                            <div className="text-sm text-gray-600">{config.description}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {simulation.planning_type && (
-                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex gap-2">
-                          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <div className="font-semibold text-blue-900 mb-1">
-                              {planningTypeConfig[simulation.planning_type as PlanningTypeKey]?.label}
-                            </div>
-                            <div className="text-sm text-blue-800">
-                              {planningTypeConfig[simulation.planning_type as PlanningTypeKey]?.description}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Size of Operation *
-                      </label>
-                    </div>
-                    <div className="flex items-start gap-2 mb-4">
-                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-600">
-                        How big is the operation you want to run? This helps the system suggest the most suitable team size for your planning.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {Object.keys(sizeOfOperationConfig).map((key) => {
-                        const config = sizeOfOperationConfig[key as SizeOfOperationKey];
-                        const isSelected = simulation.size_of_operation === key;
-                        return (
-                          <div
-                            key={key}
-                            className={`
-                              p-4 rounded-lg border-2 cursor-not-allowed relative
-                              ${
-                                isSelected
-                                  ? 'border-teal-600 bg-teal-50'
-                                  : 'border-gray-200 bg-gray-50 opacity-60'
-                              }
-                            `}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-bold text-gray-900">
-                                    {config.label}
-                                  </span>
-                                  {config.subtitle && (
-                                    <span className="text-sm text-gray-600">
-                                      {config.subtitle}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-sm text-gray-600 italic">
-                                  {config.description}
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <div className="ml-3">
-                                  <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center">
-                                    <Check className="w-4 h-4 text-white" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Context & Objectives
-                      <span className="text-gray-500 font-normal ml-2">(Optional)</span>
+                      What type of planning are you doing?
                     </label>
-                    <textarea
-                      value={simulationInputs.contextNotes || ''}
-                      disabled
-                      placeholder="Describe the business context, drivers, and expected outcomes..."
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 cursor-not-allowed resize-none"
-                    />
-                    <div className="flex items-start gap-2 mt-2">
-                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-500">
-                        This helps provide context when reviewing the simulation later
-                      </p>
-                    </div>
+                    <div className="text-lg font-medium text-gray-900">{planningTypeLabel}</div>
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Size of operation
+                    </label>
+                    <div className="text-lg font-medium text-gray-900">{sizeOfOperationLabel}</div>
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Business Area / Function
+                    </label>
+                    <div className="text-lg font-medium text-gray-900">{businessArea}</div>
                   </div>
                 </div>
               </div>
@@ -330,557 +225,416 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 1 && (
               <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Function & Sub-Function Setup
-                      {simulationInputs.isCustomFunction && (
-                        <span className="ml-2 text-sm font-normal text-teal-600">(Custom)</span>
-                      )}
-                    </h2>
-                    <p className="text-gray-600 mt-1">
-                      Define what functions you're planning for
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <h2 className="text-2xl font-bold text-gray-900">Function Setup</h2>
                   <ReadOnlyBadge />
                 </div>
 
-                <div className="space-y-8">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Main Function *
-                    </label>
-                    <input
-                      type="text"
-                      value={getFunctionDisplayName() + (simulationInputs.isCustomFunction ? ' (Custom)' : '')}
-                      disabled
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 cursor-not-allowed"
-                    />
-                  </div>
+                <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {businessArea}
+                  </h3>
+                  <p className="text-gray-600">
+                    {subFunctions.length} sub-function{subFunctions.length !== 1 ? 's' : ''} configured
+                  </p>
+                </div>
 
-                  <div className="border-t pt-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Sub-Functions
-                    </h3>
-
-                    {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                      <>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-semibold text-gray-900">
-                            Your Sub-Functions ({subFunctions.length})
-                          </h4>
+                <div className="space-y-4">
+                  {subFunctions.map((sf: any, index: number) => (
+                    <div key={index} className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">
+                            Sub-Function {index + 1}
+                          </div>
+                          <div className="text-xl font-bold text-gray-900">{sf.name}</div>
                         </div>
-                        <div className="space-y-3">
-                          {subFunctions.map((sf: any, index: number) => (
-                            <div
-                              key={sf.id}
-                              className="border border-gray-200 rounded-lg overflow-hidden"
-                            >
-                              <div className="flex items-center justify-between p-4 bg-gray-50">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <span className="text-sm font-medium text-gray-500">
-                                    {index + 1}.
-                                  </span>
-                                  <span className="font-medium text-gray-900">
-                                    {sf.name}
-                                  </span>
-                                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                                    ✓ Configured
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
+                          {sf.status === 'fully_configured' ? 'Configured' : 'Partial'}
                         </div>
-
-                        <div className="mt-4 flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-blue-800">
-                            You'll configure workload and operating model for each sub-function in the next steps
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-                        <p className="text-gray-500">No sub-functions configured</p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {activeTab === 2 && (
-              <div className="max-w-5xl mx-auto">
+              <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">Workload & Risk Inputs</h2>
-                    <p className="text-gray-600 mt-1">
-                      Provide min-typical-max ranges for Monte Carlo simulation
-                    </p>
+                    <p className="text-gray-600 mt-1">15 questions across 5 categories</p>
                   </div>
                   <ReadOnlyBadge />
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start gap-2">
-                    <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-900">
-                      <p className="font-medium mb-1">Range-Based Inputs</p>
-                      <p className="text-blue-800">
-                        Provide <strong>Min</strong> (best case), <strong>Typical</strong> (expected), and{' '}
-                        <strong>Max</strong> (worst case) values. The Monte Carlo simulation will randomly
-                        sample within these ranges to model uncertainty.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                  <div className="space-y-6">
-                    {subFunctions.map((sf: any, index: number) => {
-                      const wd = sf.workloadDrivers || {};
+                  <div className="space-y-8">
+                    {subFunctions.map((sf: any, sfIndex: number) => {
+                      const hrAnswers = sf.hrAnswers || {};
+                      const isExpanded = expandedSubFunctions[sfIndex];
+
                       return (
-                        <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                          <div className="bg-teal-600 text-white px-6 py-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-sm opacity-90">
-                                  Sub-Function {index + 1} of {subFunctions.length}
-                                </div>
-                                <div className="text-xl font-bold mt-1">{sf.name}</div>
+                        <div key={sfIndex} className="bg-white rounded-lg shadow-md overflow-hidden">
+                          <button
+                            onClick={() => toggleSubFunction(sfIndex)}
+                            className="w-full bg-teal-600 text-white px-6 py-4 flex items-center justify-between hover:bg-teal-700 transition-colors"
+                          >
+                            <div className="text-left">
+                              <div className="text-sm opacity-90">
+                                Sub-Function {sfIndex + 1} of {subFunctions.length}
                               </div>
-                              <div className="flex gap-2">
-                                {subFunctions.map((_: any, idx: number) => (
-                                  <div
-                                    key={idx}
-                                    className={`w-2 h-2 rounded-full ${
-                                      idx === index ? 'bg-white' : 'bg-teal-400'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
+                              <div className="text-xl font-bold mt-1">{sf.name}</div>
                             </div>
-                          </div>
-                          <div className="p-6 space-y-8">
-                            {sf.workTypeId && (
-                              <div className="border-t pt-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Type Selection</h3>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Select Work Type
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={sf.workTypeId}
-                                      disabled
-                                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 cursor-not-allowed"
-                                    />
-                                  </div>
-
-                                  {sf.workTypeCoefficients && (
-                                    <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                                      <h4 className="text-sm font-semibold text-teal-900 mb-3">
-                                        Work Type Coefficients (Auto-loaded)
-                                      </h4>
-                                      <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div>
-                                          <span className="text-teal-700">Productivity Rate:</span>
-                                          <span className="ml-2 font-medium text-teal-900">
-                                            {sf.workTypeCoefficients.productivityRate?.toFixed(2) || 'N/A'}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <span className="text-teal-700">Complexity Factor:</span>
-                                          <span className="ml-2 font-medium text-teal-900">
-                                            {sf.workTypeCoefficients.complexityFactor?.toFixed(2) || 'N/A'}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <span className="text-teal-700">Variance Level:</span>
-                                          <span className="ml-2 font-medium text-teal-900">
-                                            {sf.workTypeCoefficients.varianceLevel?.toFixed(2) || 'N/A'}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <span className="text-teal-700">Min Headcount:</span>
-                                          <span className="ml-2 font-medium text-teal-900">
-                                            {sf.workTypeCoefficients.minHeadcountRule || 'N/A'}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <span className="text-teal-700">Risk Multiplier:</span>
-                                          <span className="ml-2 font-medium text-teal-900">
-                                            {sf.workTypeCoefficients.riskMultiplier?.toFixed(2) || 'N/A'}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                            {isExpanded ? (
+                              <ChevronUp className="w-6 h-6" />
+                            ) : (
+                              <ChevronDown className="w-6 h-6" />
                             )}
+                          </button>
 
-                            {wd.totalWorkUnits && (
-                              <div className="border-t pt-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Workload & Productivity</h3>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Total Work Units / Tasks
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                      <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Min</label>
-                                        <input
-                                          type="number"
-                                          value={wd.totalWorkUnits.min || 0}
-                                          disabled
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Typical</label>
-                                        <input
-                                          type="number"
-                                          value={wd.totalWorkUnits.typical || 0}
-                                          disabled
-                                          className="w-full px-3 py-2 border border-teal-400 border-2 rounded-lg bg-gray-50 font-semibold cursor-not-allowed"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Max</label>
-                                        <input
-                                          type="number"
-                                          value={wd.totalWorkUnits.max || 0}
-                                          disabled
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="flex items-start gap-2 mt-2">
-                                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                                      <p className="text-xs text-gray-500">
-                                        Total amount of work to be completed (e.g., transactions, tickets, projects)
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {wd.productivityUnitsPerPersonPerDay && (
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Productivity (units per person per day)
-                                      </label>
-                                      <div className="grid grid-cols-3 gap-3">
-                                        <div>
-                                          <label className="block text-xs text-gray-600 mb-1">Min</label>
-                                          <div className="relative">
-                                            <input
-                                              type="number"
-                                              value={wd.productivityUnitsPerPersonPerDay.min || 0}
-                                              disabled
-                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed pr-12"
-                                            />
-                                            <span className="absolute right-3 top-2 text-gray-500 text-sm">units</span>
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <label className="block text-xs text-gray-600 mb-1">Typical</label>
-                                          <div className="relative">
-                                            <input
-                                              type="number"
-                                              value={wd.productivityUnitsPerPersonPerDay.typical || 0}
-                                              disabled
-                                              className="w-full px-3 py-2 border border-teal-400 border-2 rounded-lg bg-gray-50 font-semibold cursor-not-allowed pr-12"
-                                            />
-                                            <span className="absolute right-3 top-2 text-gray-500 text-sm">units</span>
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <label className="block text-xs text-gray-600 mb-1">Max</label>
-                                          <div className="relative">
-                                            <input
-                                              type="number"
-                                              value={wd.productivityUnitsPerPersonPerDay.max || 0}
-                                              disabled
-                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed pr-12"
-                                            />
-                                            <span className="absolute right-3 top-2 text-gray-500 text-sm">units</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-start gap-2 mt-2">
-                                        <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                                        <p className="text-xs text-gray-500">
-                                          How many work units one person can complete in one day
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
+                          {isExpanded && (
+                            <div className="p-6 space-y-6">
+                              <div className="text-center mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">About the Work</h3>
+                                <p className="text-gray-600">Answer in simple terms - no formulas needed</p>
                               </div>
-                            )}
-                          </div>
+
+                              <QuestionCard
+                                title="What type of work is this mainly about?"
+                                number={1}
+                                help="Selected work type determines productivity, complexity, and risk coefficients"
+                              >
+                                <div className="text-lg font-medium text-teal-700">
+                                  {sf.workTypeId || 'Not specified'}
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard title="How complex is this work?" number={2}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <OptionDisplay selected={hrAnswers.complexity === 'very_simple'}>
+                                    Very simple (repetitive / routine)
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.complexity === 'normal'}>
+                                    Normal (some judgement required)
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.complexity === 'complex'}>
+                                    Complex (requires experience)
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.complexity === 'highly_complex'}>
+                                    Highly complex / sensitive / critical
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="In a normal month, roughly how many work items does your team complete?"
+                                number={3}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.volume === 'under_200'}>
+                                    Less than 200
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.volume === '200_500'}>
+                                    200 – 500
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.volume === '500_1000'}>
+                                    500 – 1,000
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.volume === '1000_2500'}>
+                                    1,000 – 2,500
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.volume === 'over_2500'}>
+                                    More than 2,500
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <div className="border-t-4 border-gray-200 my-8"></div>
+
+                              <div className="text-center mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">About Daily Productivity</h3>
+                              </div>
+
+                              <QuestionCard
+                                title="On a normal working day, roughly how many tasks can ONE staff complete?"
+                                number={4}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <OptionDisplay selected={hrAnswers.productivityRate === 'under_5'}>
+                                    Less than 5
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityRate === '5_10'}>
+                                    5 – 10
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityRate === '10_20'}>
+                                    10 – 20
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityRate === 'over_20'}>
+                                    More than 20
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="When things go very well (no system issues, good internet, no leave), how does productivity change?"
+                                number={5}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <OptionDisplay selected={hrAnswers.productivityGoodCase === 'slightly'}>
+                                    Slightly higher
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityGoodCase === 'twenty_percent'}>
+                                    20% higher
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityGoodCase === 'fifty_percent'}>
+                                    Around 50% higher
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityGoodCase === 'double'}>
+                                    Almost double
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="When things go badly (system down, short staff, urgent requests), how does it drop?"
+                                number={6}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <OptionDisplay selected={hrAnswers.productivityBadCase === 'slightly'}>
+                                    Slightly
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityBadCase === 'twenty_percent'}>
+                                    Moderate
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityBadCase === 'fifty_percent'}>
+                                    A lot
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.productivityBadCase === 'double'}>
+                                    Very badly
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <div className="border-t-4 border-gray-200 my-8"></div>
+
+                              <div className="text-center mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Staff & Risk Factors</h3>
+                              </div>
+
+                              <QuestionCard
+                                title="Out of 10 staff, how many are usually absent on a normal day?"
+                                number={7}
+                              >
+                                <div className="grid grid-cols-4 gap-3">
+                                  <OptionDisplay selected={hrAnswers.absenteeRate === '0'}>
+                                    0
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.absenteeRate === '1'}>
+                                    1
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.absenteeRate === '2'}>
+                                    2
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.absenteeRate === '3_or_more'}>
+                                    3 or more
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="When a new staff joins, how long do they take to reach full performance?"
+                                number={8}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <OptionDisplay selected={hrAnswers.rampUpTime === 'under_1_month'}>
+                                    Less than 1 month
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.rampUpTime === '1_2_months'}>
+                                    1 – 2 months
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.rampUpTime === '3_6_months'}>
+                                    3 – 6 months
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.rampUpTime === 'over_6_months'}>
+                                    More than 6 months
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard title="How stable is the team normally?" number={9}>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.teamStability === 'very_stable'}>
+                                    Very stable (rarely resign)
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.teamStability === 'normal'}>
+                                    Normal (occasional resignation)
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.teamStability === 'high_turnover'}>
+                                    High turnover
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <div className="border-t-4 border-gray-200 my-8"></div>
+
+                              <div className="text-center mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Staff Type & Cost</h3>
+                                <p className="text-gray-600">Configure the roles that will perform this work</p>
+                              </div>
+
+                              <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6">
+                                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                                  Configured Roles (Question 10)
+                                </h4>
+                                {sf.staffConfiguration?.advancedPattern && sf.staffConfiguration.advancedPattern.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {sf.staffConfiguration.advancedPattern.map((role: any, idx: number) => (
+                                      <div key={idx} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
+                                        <div className="text-sm font-medium text-gray-900">{role.label}</div>
+                                        <div className="text-sm text-gray-600">Pattern: {role.pattern}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic">No role pattern configured</p>
+                                )}
+                              </div>
+
+                              <QuestionCard title="Do staff usually need overtime to cope?" number={11}>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.overtimeFrequency === 'none'}>
+                                    No overtime
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.overtimeFrequency === 'occasional'}>
+                                    Occasionally
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.overtimeFrequency === 'frequent'}>
+                                    Almost every month
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <div className="border-t-4 border-gray-200 my-8"></div>
+
+                              <div className="text-center mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Targets & Priorities</h3>
+                              </div>
+
+                              <QuestionCard title="When must this work be completed by?" number={13}>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.deadline === '1_week'}>
+                                    1 week
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.deadline === '2_weeks'}>
+                                    2 weeks
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.deadline === '1_month'}>
+                                    1 month
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.deadline === '3_months'}>
+                                    3 months
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.deadline === 'ongoing'}>
+                                    Ongoing (monthly operation)
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="If the work is delayed, how serious is the impact?"
+                                number={14}
+                              >
+                                <div className="grid grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.impactLevel === 'low'}>
+                                    Low impact
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.impactLevel === 'medium'}>
+                                    Medium impact
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.impactLevel === 'high'}>
+                                    High impact / critical
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+
+                              <QuestionCard
+                                title="What matters more for you in this decision?"
+                                number={15}
+                                help="This helps us understand your risk appetite"
+                              >
+                                <div className="grid grid-cols-3 gap-3">
+                                  <OptionDisplay selected={hrAnswers.priority === 'lowest_cost'}>
+                                    Lowest cost
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.priority === 'balanced'}>
+                                    Balanced cost & speed
+                                  </OptionDisplay>
+                                  <OptionDisplay selected={hrAnswers.priority === 'fastest'}>
+                                    Fastest completion (even if cost is higher)
+                                  </OptionDisplay>
+                                </div>
+                              </QuestionCard>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-gray-600">No workload data available</p>
+                  <div className="text-center py-12 text-gray-500">
+                    No sub-functions configured
+                  </div>
                 )}
               </div>
             )}
 
             {activeTab === 3 && (
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-3xl mx-auto">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
-                    <p className="text-gray-600 mt-1">
-                      Define how work is structured and delivered
-                    </p>
-                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
                   <ReadOnlyBadge />
                 </div>
 
-                {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                  <div className="space-y-6">
-                    {subFunctions.map((sf: any, index: number) => (
-                      <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                        <div className="bg-teal-600 text-white px-6 py-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-sm opacity-90">
-                                Sub-Function {index + 1} of {subFunctions.length}
-                              </div>
-                              <div className="text-xl font-bold mt-1">{sf.name}</div>
-                            </div>
-                            <div className="flex gap-2">
-                              {subFunctions.map((_: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  className={`w-2 h-2 rounded-full ${
-                                    idx === index ? 'bg-white' : 'bg-teal-400'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-6 space-y-8">
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                              Organizational Structure *
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {[
-                                { value: 'centralized', label: 'Centralized', desc: 'Single team serves all' },
-                                { value: 'decentralized', label: 'Decentralized', desc: 'Teams at each location' },
-                                { value: 'hybrid', label: 'Hybrid', desc: 'Mix of both approaches' },
-                              ].map(option => (
-                                <div
-                                  key={option.value}
-                                  className={`
-                                    p-4 rounded-lg border-2 cursor-not-allowed
-                                    ${
-                                      sf.operatingModel?.structure === option.value
-                                        ? 'border-teal-600 bg-teal-50'
-                                        : 'border-gray-300 bg-gray-50 opacity-60'
-                                    }
-                                  `}
-                                >
-                                  <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
-                                  <div className="text-sm text-gray-600">{option.desc}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                              Delivery Model *
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {[
-                                { value: 'in_house', label: 'In-House', desc: 'All internal resources' },
-                                { value: 'outsourced', label: 'Outsourced', desc: '3rd party vendor' },
-                                { value: 'hybrid', label: 'Hybrid', desc: 'Mix of both models' },
-                              ].map(option => (
-                                <div
-                                  key={option.value}
-                                  className={`
-                                    p-4 rounded-lg border-2 cursor-not-allowed
-                                    ${
-                                      sf.operatingModel?.delivery === option.value
-                                        ? 'border-teal-600 bg-teal-50'
-                                        : 'border-gray-300 bg-gray-50 opacity-60'
-                                    }
-                                  `}
-                                >
-                                  <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
-                                  <div className="text-sm text-gray-600">{option.desc}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                              Automation Level *
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {[
-                                { value: 'manual', label: 'Manual', desc: 'Paper-based, manual tasks' },
-                                { value: 'partially_automated', label: 'Partially Automated', desc: 'Some digital tools, mixed' },
-                                { value: 'highly_automated', label: 'Highly Automated', desc: 'End-to-end automation' },
-                              ].map(option => (
-                                <div
-                                  key={option.value}
-                                  className={`
-                                    p-4 rounded-lg border-2 cursor-not-allowed
-                                    ${
-                                      sf.operatingModel?.automationLevel === option.value
-                                        ? 'border-teal-600 bg-teal-50'
-                                        : 'border-gray-300 bg-gray-50 opacity-60'
-                                    }
-                                  `}
-                                >
-                                  <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
-                                  <div className="text-sm text-gray-600">{option.desc}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                              Operating Hours / Coverage *
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {[
-                                { value: 'office_hours', label: 'Office Hours', desc: '8am - 5pm weekdays' },
-                                { value: 'extended_hours', label: 'Extended Hours', desc: '7am - 10pm + weekends' },
-                                { value: 'twenty_four_seven', label: '24/7', desc: 'Round-the-clock shifts' },
-                              ].map(option => (
-                                <div
-                                  key={option.value}
-                                  className={`
-                                    p-4 rounded-lg border-2 cursor-not-allowed
-                                    ${
-                                      sf.operatingModel?.coverage === option.value
-                                        ? 'border-teal-600 bg-teal-50'
-                                        : 'border-gray-300 bg-gray-50 opacity-60'
-                                    }
-                                  `}
-                                >
-                                  <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
-                                  <div className="text-sm text-gray-600">{option.desc}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600">No operating model data available</p>
-                )}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-900">
+                    This section shows operating model configuration, delivery approach, and resource allocation strategies.
+                  </p>
+                </div>
               </div>
             )}
 
             {activeTab === 4 && (
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Review & Calculate</h2>
-                    <p className="text-gray-600 mt-1">
-                      Review your inputs and run the calculation
-                    </p>
-                  </div>
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <h2 className="text-2xl font-bold text-gray-900">Review & Calculate</h2>
                   <ReadOnlyBadge />
                 </div>
 
-                <div className="space-y-6">
-                  <div className="border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Planning Summary</h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
+                <div className="space-y-4">
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Simulation Summary</h3>
+                    <div className="space-y-2 text-sm text-gray-700">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Simulation Name:</span>
-                        <span className="font-medium text-gray-900">{simulation.simulation_name}</span>
+                        <span>Planning Type:</span>
+                        <span className="font-medium">{planningTypeLabel}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Planning Type:</span>
-                        <span className="font-medium text-gray-900 capitalize">
-                          {planningTypeConfig[simulation.planning_type as PlanningTypeKey]?.label || simulation.planning_type.replace(/_/g, ' ')}
-                        </span>
+                        <span>Size of Operation:</span>
+                        <span className="font-medium">{sizeOfOperationLabel}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Function:</span>
-                        <span className="font-medium text-gray-900">
-                          {getFunctionDisplayName()}
-                        </span>
+                        <span>Sub-Functions:</span>
+                        <span className="font-medium">{subFunctions.length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Operation Size:</span>
-                        <span className="font-medium text-teal-700 capitalize">
-                          {sizeOfOperationConfig[simulation.size_of_operation as SizeOfOperationKey]?.label || simulation.size_of_operation.replace(/_/g, ' ')}
-                        </span>
+                        <span>Total FTE:</span>
+                        <span className="font-medium">{simulation.total_fte?.toFixed(1) || 'N/A'}</span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="border border-gray-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Sub-Functions Overview ({subFunctions.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {subFunctions.map((sf: any, index: number) => (
-                        <div key={sf.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-gray-500">{index + 1}.</span>
-                            <span className="font-medium text-gray-900">{sf.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Check className="w-5 h-5 text-green-600" />
-                            <span className="text-sm text-gray-600">Fully configured</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-6">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-teal-900 mb-2">
-                          Ready to Calculate MVO
-                        </h4>
-                        <p className="text-sm text-teal-800 mb-4">
-                          The system will:
-                        </p>
-                        <ul className="text-sm text-teal-800 mb-4 space-y-1 list-disc list-inside">
-                          <li>
-                            <strong>Calculate Baseline Headcount:</strong> Using standard formula (Total Workload ÷ Productivity × Days)
-                          </li>
-                          <li>
-                            <strong>Run Monte Carlo Simulation:</strong> Test headcounts from Baseline-2 to Baseline+5 with 5,000 iterations each
-                          </li>
-                          <li>
-                            <strong>Identify MVO:</strong> Auto-select minimum headcount meeting your risk threshold
-                          </li>
-                          <li>
-                            <strong>Generate AI Explanation:</strong> Professional rationale for management approval
-                          </li>
-                        </ul>
-                        <p className="text-sm text-teal-800">
-                          Results show Baseline (no-risk) vs Recommended MVO (Monte Carlo) with full
-                          risk analysis, cost projections, and strategic recommendations.
-                        </p>
+                      <div className="flex justify-between">
+                        <span>Monthly Cost:</span>
+                        <span className="font-medium">RM {Math.round(simulation.total_monthly_cost || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -888,126 +642,119 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
               </div>
             )}
 
-            {activeTab === 5 && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Simulation Results</h2>
-                  <ReadOnlyBadge />
+            {activeTab === 5 && simulationResult && (
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    MVO Results: {simulation.simulation_name}
+                  </h1>
+                  <p className="text-gray-600">
+                    Planning Type: {planningTypeLabel} • Size of Operation: {sizeOfOperationLabel}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg border border-cyan-200 shadow-sm">
-                    <div className="text-sm text-cyan-700 mb-1 font-medium">Total FTE</div>
-                    <div className="text-3xl font-bold text-cyan-900">{simulation.total_fte || 0}</div>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
-                    <div className="text-sm text-blue-700 mb-1 font-medium">Monthly Cost</div>
-                    <div className="text-3xl font-bold text-blue-900">
-                      MYR {(simulation.total_monthly_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </div>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-sm text-gray-700 mb-1 font-medium">Workload Score</div>
-                    <div className="text-3xl font-bold text-gray-900">{simulation.workload_score || 0}</div>
-                  </div>
-                </div>
-
-                {subFunctions && subFunctions.length > 0 && (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                      <h3 className="text-lg font-semibold text-gray-900">Sub-Functions Breakdown</h3>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-4">
-                        {subFunctions.map((sf: any, index: number) => {
-                          const sfResult = synchronizedResults.find((r: any) => r.subFunctionId === sf.id);
-                          const mvo = sfResult?.result?.mvo;
-
-                          return (
-                            <div key={index} className="border border-gray-200 rounded-lg p-5 bg-gray-50 hover:shadow-md transition-shadow">
-                              <div className="flex items-start justify-between mb-4">
-                                <div>
-                                  <h4 className="text-lg font-semibold text-gray-900">{sf.name}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    Work Type: <span className="font-medium">{sf.workTypeId || 'N/A'}</span>
-                                  </p>
-                                </div>
-                                {mvo?.recommendedHeadcount && (
-                                  <div className="text-right bg-white px-4 py-2 rounded-lg border border-cyan-200">
-                                    <div className="text-xs text-gray-600 mb-1">Recommended FTE</div>
-                                    <div className="text-2xl font-bold text-cyan-700">{mvo.recommendedHeadcount}</div>
-                                  </div>
-                                )}
-                              </div>
-
-                              {mvo && (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
-                                  <div>
-                                    <div className="text-xs text-gray-600 mb-1">Avg Duration</div>
-                                    <div className="text-sm font-semibold text-gray-900">
-                                      {mvo.avgDurationDays ? `${Math.round(mvo.avgDurationDays)} days` : 'N/A'}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-gray-600 mb-1">Success Rate</div>
-                                    <div className="text-sm font-semibold text-gray-900">
-                                      {mvo.successRatePct ? `${Math.round(mvo.successRatePct)}%` : 'N/A'}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-gray-600 mb-1">Monthly Cost</div>
-                                    <div className="text-sm font-semibold text-gray-900">
-                                      MYR {mvo.avgMonthlyCostRm ? Math.round(mvo.avgMonthlyCostRm).toLocaleString() : 'N/A'}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-gray-600 mb-1">Risk Level</div>
-                                    <div className="text-sm font-semibold text-gray-900 capitalize">
-                                      {mvo.riskCategory || 'N/A'}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-2 border-teal-300 rounded-xl px-6 py-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Info className="w-6 h-6 text-teal-700" />
+                      <div>
+                        <div className="font-bold text-gray-900 mb-1">MVO Recommendation</div>
+                        <div className="text-sm text-gray-700">
+                          {simulationResult.totalFte.toFixed(1)} FTE • ~{simulationResult.avgDurationDays} days Avg, {simulationResult.p90DurationDays} days P90 • {simulationResult.successRatePct.toFixed(1)}% success • RM {Math.round(simulationResult.avgMonthlyCostRm).toLocaleString()}/month
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {resultPayload.mvoComposition && (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                      <h3 className="text-lg font-semibold text-gray-900">System-Suggested Role Composition</h3>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-3">
-                        {resultPayload.mvoComposition.map((role: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div>
-                              <div className="font-semibold text-gray-900">{role.roleName}</div>
-                              <div className="text-sm text-gray-600">
-                                {role.minSalary && role.maxSalary ? (
-                                  <>MYR {role.minSalary.toLocaleString()} - {role.maxSalary.toLocaleString()}</>
-                                ) : (
-                                  'Salary range not available'
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-cyan-700">{role.count}</div>
-                              <div className="text-xs text-gray-600">positions</div>
-                            </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Key Statistics</h2>
+                <KPICards keyStats={simulationResult.keyStats} />
+
+                <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                  <div className="lg:col-span-2">
+                    <SubFunctionAccordion subFunctions={simulationResult.subFunctions} />
+                    <HeadcountComparisonTable
+                      subFunctions={simulationResult.subFunctions}
+                      combinedComparisonRows={simulationResult.combinedComparisonRows}
+                    />
+                  </div>
+
+                  <div className="lg:col-span-1">
+                    <SystemRoleCompositionPanel composition={simulationResult.systemRoleComposition} />
+
+                    <div className="mt-6 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3">AI Summary for HR Decision-Making</h3>
+                      <ul className="space-y-3 text-sm text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-600 font-bold mt-0.5">•</span>
+                          <div>
+                            <strong>Staffing:</strong> The MVO analysis recommends {simulationResult.keyStats.mvoHeadcount} FTE, {Math.abs(simulationResult.keyStats.mvoHeadcount - simulationResult.keyStats.baselineHeadcount)} {simulationResult.keyStats.mvoHeadcount > simulationResult.keyStats.baselineHeadcount ? 'more' : 'fewer'} than the baseline.
                           </div>
-                        ))}
-                      </div>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-600 font-bold mt-0.5">•</span>
+                          <div>
+                            <strong>Risk:</strong> The recommended configuration carries {simulationResult.keyStats.mvoFailureRiskPct < 10 ? 'low' : simulationResult.keyStats.mvoFailureRiskPct < 25 ? 'medium' : 'high'} risk ({simulationResult.keyStats.mvoFailureRiskPct.toFixed(1)}% failure rate).
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-600 font-bold mt-0.5">•</span>
+                          <div>
+                            <strong>Next Steps:</strong> Review the system-suggested role composition and adjust based on internal salary structures. Consider the recommended strategies for each sub-function.
+                          </div>
+                        </li>
+                      </ul>
                     </div>
                   </div>
-                )}
+                </div>
+
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Info className="w-5 h-5 text-blue-700" />
+                    Understanding the Results
+                  </h3>
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <div>
+                      <strong className="text-gray-900">Baseline vs MVO:</strong> Baseline reflects traditional Excel-style headcount calculation. MVO (Minimum Viable Operations) is the optimized headcount that balances cost, time, and risk based on Monte Carlo simulation.
+                    </div>
+                    <div>
+                      <strong className="text-gray-900">Reading the Comparison Table:</strong> Each row shows a different team size. The green highlighted row is the MVO recommendation that best balances delivery time, cost, and success rate.
+                    </div>
+                    <div>
+                      <strong className="text-gray-900">P-values (P50, P75, P90):</strong> These percentiles show delivery time confidence. P90 means 90% of scenarios finish on or before this duration. Higher percentiles account for delays and risk factors.
+                    </div>
+                    <div>
+                      <strong className="text-gray-900">Risk Categories:</strong> Low risk (&lt;10%) indicates high confidence. Medium risk (10-25%) suggests monitoring needed. High risk (&gt;25%) indicates potential delivery challenges.
+                    </div>
+                    <div>
+                      <strong className="text-gray-900">System-Suggested Roles:</strong> The role composition uses JLG salary bands and is a starting point. Adjust based on specific requirements, internal structures, and market conditions.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 5 && !simulationResult && (
+              <div className="max-w-3xl mx-auto text-center py-12">
+                <div className="text-amber-600 mb-4">
+                  <Info className="w-12 h-12 mx-auto" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Results Not Available</h3>
+                <p className="text-gray-600">
+                  The detailed simulation results are not available for this saved simulation.
+                </p>
               </div>
             )}
           </div>
+        </div>
+
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
