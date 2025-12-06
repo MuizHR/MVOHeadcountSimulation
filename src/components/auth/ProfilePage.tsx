@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Briefcase, Mail, Calendar, Save, Shield, RefreshCw } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Calendar, Save, Shield, RefreshCw, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -22,7 +22,7 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: ProfilePageProps) {
-  const { user, appUser, isAdmin, refreshProfile } = useAuth();
+  const { user, appUser, isAdmin, isSuperAdmin, refreshProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -300,8 +300,13 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
                   <Shield className="w-4 h-4" />
                   Account Role
                 </label>
-                <div className="flex items-center gap-2">
-                  {profile?.role === 'admin' ? (
+                <div className="flex items-center gap-3">
+                  {profile?.role === 'super_admin' ? (
+                    <span className="px-3 py-1.5 bg-amber-100 text-amber-900 text-sm font-bold rounded-lg flex items-center gap-2 border-2 border-amber-300">
+                      <Crown className="w-4 h-4" />
+                      Super Administrator
+                    </span>
+                  ) : profile?.role === 'admin' ? (
                     <span className="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-semibold rounded-lg">
                       Administrator
                     </span>
@@ -311,7 +316,9 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
                     </span>
                   )}
                   <p className="text-sm text-gray-500">
-                    {profile?.role === 'admin'
+                    {profile?.role === 'super_admin'
+                      ? 'Owner with full control and cannot be modified by other admins'
+                      : profile?.role === 'admin'
                       ? 'Full system access with user management capabilities'
                       : 'Standard user access'}
                   </p>
@@ -337,29 +344,39 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
 
         {isAdmin() && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-6">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 px-8 py-6">
+            <div className={`bg-gradient-to-r ${isSuperAdmin() ? 'from-amber-600 to-amber-700' : 'from-red-600 to-red-700'} px-8 py-6`}>
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Shield className="w-6 h-6" />
-                Admin Tools
+                {isSuperAdmin() ? <Crown className="w-6 h-6" /> : <Shield className="w-6 h-6" />}
+                {isSuperAdmin() ? 'Super Admin Tools' : 'Admin Tools'}
               </h2>
             </div>
             <div className="p-8">
               <p className="text-gray-600 mb-4">
-                As an administrator, you have access to additional features:
+                {isSuperAdmin()
+                  ? 'As the Super Administrator (Owner), you have full control over the system:'
+                  : 'As an administrator, you have access to additional features:'}
               </p>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  <div className={`w-2 h-2 ${isSuperAdmin() ? 'bg-amber-600' : 'bg-red-600'} rounded-full`}></div>
                   View all user simulations
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  <div className={`w-2 h-2 ${isSuperAdmin() ? 'bg-amber-600' : 'bg-red-600'} rounded-full`}></div>
                   Delete any simulation
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                  Manage user roles (contact system administrator)
+                  <div className={`w-2 h-2 ${isSuperAdmin() ? 'bg-amber-600' : 'bg-red-600'} rounded-full`}></div>
+                  {isSuperAdmin()
+                    ? 'Full user management - assign any role including Admin and Super Admin'
+                    : 'Manage user roles - assign Admin to regular users'}
                 </li>
+                {isSuperAdmin() && (
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
+                    Protected account - your Super Admin role cannot be changed by other admins
+                  </li>
+                )}
               </ul>
             </div>
           </div>
