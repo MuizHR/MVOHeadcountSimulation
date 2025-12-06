@@ -19,7 +19,7 @@
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  ┌─┐  JLG Group MVO & Headcount Simulator              [Save] [Export] ┃
+┃  ┌─┐  JLG MVO & Headcount Simulator              [Save] [Export] ┃
 ┃  └─┘  AI-enabled workforce planning                         [Saved ▼] ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
