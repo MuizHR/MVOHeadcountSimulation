@@ -140,7 +140,7 @@ export function ExportSummary({ inputs, scenarios, selectedScenario, onClose }: 
                 <FileDown className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">JLG Group MVO & Headcount Simulator</h1>
+                <h1 className="text-3xl font-bold text-gray-900">JLG MVO & Headcount Simulator</h1>
                 <p className="text-gray-600">Workforce Planning Analysis Report</p>
               </div>
             </div>
