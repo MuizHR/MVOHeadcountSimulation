@@ -119,6 +119,9 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
             </div>
             <div className="hidden lg:block text-left">
               <div className="text-sm font-medium text-gray-900">{userName}</div>
+              {appUser?.role === 'super_admin' && (
+                <div className="text-xs text-amber-600 font-semibold">Super Admin</div>
+              )}
               {appUser?.role === 'admin' && (
                 <div className="text-xs text-red-600 font-semibold">Admin</div>
               )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Search, Edit2, Save, X } from 'lucide-react';
+import { Shield, Users, Search, Edit2, Save, X, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -7,19 +7,19 @@ interface UserProfile {
   id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'super_admin' | 'admin' | 'user';
   company: string | null;
   department: string | null;
   created_at: string;
 }
 
 export const UserManagement: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [editingRole, setEditingRole] = useState<'admin' | 'user'>('user');
+  const [editingRole, setEditingRole] = useState<'super_admin' | 'admin' | 'user'>('user');
 
   useEffect(() => {
     if (!isAdmin()) {
@@ -45,7 +45,7 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'user') => {
+  const handleUpdateRole = async (userId: string, newRole: 'super_admin' | 'admin' | 'user') => {
     try {
       console.log('Updating user role:', { userId, newRole });
 
@@ -109,9 +109,21 @@ export const UserManagement: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <p className="text-sm text-yellow-800">
-          <strong>Admin Mode:</strong> You can manage user roles and permissions. Handle with care.
+      <div className={`${isSuperAdmin() ? 'bg-amber-50 border-amber-200' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-4 mb-6`}>
+        <p className={`text-sm ${isSuperAdmin() ? 'text-amber-800' : 'text-yellow-800'}`}>
+          {isSuperAdmin() ? (
+            <>
+              <strong className="flex items-center gap-2">
+                <Crown className="w-4 h-4" />
+                Super Admin Mode:
+              </strong>
+              You have full control over all users and can assign admin roles. Super admin privileges cannot be removed by other admins.
+            </>
+          ) : (
+            <>
+              <strong>Admin Mode:</strong> You can manage regular users and assign admin roles. You cannot modify super admin accounts.
+            </>
+          )}
         </p>
       </div>
 
@@ -172,21 +184,25 @@ export const UserManagement: React.FC = () => {
                     {editingUserId === user.id ? (
                       <select
                         value={editingRole}
-                        onChange={(e) => setEditingRole(e.target.value as 'admin' | 'user')}
+                        onChange={(e) => setEditingRole(e.target.value as 'super_admin' | 'admin' | 'user')}
                         className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
+                        {isSuperAdmin() && <option value="super_admin">Super Admin</option>}
                       </select>
                     ) : (
                       <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.role === 'admin'
+                        className={`px-3 py-1 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full ${
+                          user.role === 'super_admin'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : user.role === 'admin'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-blue-100 text-blue-800'
                         }`}
                       >
-                        {user.role === 'admin' ? 'Administrator' : 'User'}
+                        {user.role === 'super_admin' && <Crown className="w-3 h-3" />}
+                        {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrator' : 'User'}
                       </span>
                     )}
                   </td>
@@ -194,7 +210,12 @@ export const UserManagement: React.FC = () => {
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {editingUserId === user.id ? (
+                    {user.role === 'super_admin' && !isSuperAdmin() ? (
+                      <span className="text-gray-400 flex items-center gap-1 text-xs">
+                        <Shield className="w-3 h-3" />
+                        Protected
+                      </span>
+                    ) : editingUserId === user.id ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleUpdateRole(user.id, editingRole)}
@@ -238,8 +259,14 @@ export const UserManagement: React.FC = () => {
       </div>
 
       <div className="mt-4 text-sm text-gray-600">
-        Total users: {users.length} ({users.filter(u => u.role === 'admin').length} admins,{' '}
-        {users.filter(u => u.role === 'user').length} regular users)
+        Total users: {users.length} (
+        {users.filter(u => u.role === 'super_admin').length > 0 && (
+          <span className="text-amber-700 font-semibold">
+            {users.filter(u => u.role === 'super_admin').length} super admin{users.filter(u => u.role === 'super_admin').length !== 1 ? 's' : ''},{' '}
+          </span>
+        )}
+        {users.filter(u => u.role === 'admin').length} admin{users.filter(u => u.role === 'admin').length !== 1 ? 's' : ''},{' '}
+        {users.filter(u => u.role === 'user').length} regular user{users.filter(u => u.role === 'user').length !== 1 ? 's' : ''})
       </div>
     </div>
   );
