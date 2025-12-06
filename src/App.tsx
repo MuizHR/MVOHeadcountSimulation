@@ -89,7 +89,7 @@ function AuthenticatedApp() {
   if (currentView === 'profile') {
     return (
       <MOVAProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-page-bg">
           <NavBar
             currentView={currentView}
             userName={userName || user?.email || 'User'}
@@ -112,7 +112,7 @@ function AuthenticatedApp() {
   if (currentView === 'historyViewer' && selectedSimulationId) {
     return (
       <MOVAProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-page-bg">
           <NavBar
             currentView={currentView}
             userName={userName || user?.email || 'User'}
@@ -134,7 +134,7 @@ function AuthenticatedApp() {
     return (
       <WizardProvider>
         <MOVAProvider>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="min-h-screen bg-page-bg">
             <NavBar
               currentView={currentView}
               userName={userName || user?.email || 'User'}
@@ -162,7 +162,7 @@ function AuthenticatedApp() {
   if (currentView === 'userManagement') {
     return (
       <MOVAProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-page-bg">
           <NavBar
             currentView={currentView}
             userName={userName || user?.email || 'User'}
@@ -181,7 +181,7 @@ function AuthenticatedApp() {
     return (
       <WizardProvider>
         <MOVAProvider>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="min-h-screen bg-page-bg">
             <NavBar
               currentView="wizard"
               userName={userName || user?.email || 'User'}
@@ -200,7 +200,7 @@ function AuthenticatedApp() {
   return (
     <WizardProvider>
       <MOVAProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-page-bg">
           <NavBar
             currentView={currentView}
             userName={userName || user?.email || 'User'}
@@ -252,10 +252,10 @@ function AuthFlow() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-page-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-text-muted font-medium">Loading...</p>
         </div>
       </div>
     );

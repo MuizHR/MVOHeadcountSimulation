@@ -1,6 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans bg-page-bg text-text-main;
+  }
+
+  h1 {
+    @apply text-4xl font-bold text-text-main;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold text-text-main;
+  }
+
+  h3 {
+    @apply text-xl font-semibold text-text-main;
+  }
+}
 
 @keyframes slide-in {
   from {

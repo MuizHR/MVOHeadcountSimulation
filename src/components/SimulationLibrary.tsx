@@ -13,11 +13,11 @@ export function SimulationLibrary({ onNavigate }: SimulationLibraryProps) {
   const showTabs = isAdmin();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-page-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Simulation Library</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-text-main mb-2">Simulation Library</h1>
+          <p className="text-text-muted">
             {showTabs
               ? 'View and manage all simulations across the organization'
               : 'Access your saved simulations and planning scenarios'
@@ -26,15 +26,15 @@ export function SimulationLibrary({ onNavigate }: SimulationLibraryProps) {
         </div>
 
         {showTabs && (
-          <div className="mb-6 border-b border-gray-200">
+          <div className="mb-6 border-b border-border-subtle">
             <nav className="-mb-px flex gap-8">
               <button
                 onClick={() => setActiveTab('my')}
                 className={`
                   py-4 px-1 border-b-2 font-medium text-sm transition-colors
                   ${activeTab === 'my'
-                    ? 'border-cyan-600 text-cyan-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-text-muted hover:text-text-main hover:border-border-subtle'
                   }
                 `}
               >
@@ -45,8 +45,8 @@ export function SimulationLibrary({ onNavigate }: SimulationLibraryProps) {
                 className={`
                   py-4 px-1 border-b-2 font-medium text-sm transition-colors
                   ${activeTab === 'all'
-                    ? 'border-cyan-600 text-cyan-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-text-muted hover:text-text-main hover:border-border-subtle'
                   }
                 `}
               >

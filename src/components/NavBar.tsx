@@ -36,28 +36,28 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
   const isActiveView = (view: string) => currentView === view;
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-border-subtle">
       <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <button
           onClick={() => onNavigate('landing')}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-md flex-shrink-0">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div className="hidden sm:block">
-            <div className="text-gray-900 font-bold text-base md:text-lg leading-tight">
+            <div className="text-text-main font-bold text-base md:text-lg leading-tight">
               JLG Group MVO & Headcount Simulator
             </div>
-            <div className="text-cyan-600 text-xs font-medium">
+            <div className="text-primary text-xs font-medium">
               AI-enabled workforce planning
             </div>
           </div>
           <div className="sm:hidden">
-            <div className="text-gray-900 font-bold text-base leading-tight">
+            <div className="text-text-main font-bold text-base leading-tight">
               JLG MVO Simulator
             </div>
-            <div className="text-cyan-600 text-xs font-medium">
+            <div className="text-primary text-xs font-medium">
               AI workforce planning
             </div>
           </div>
@@ -67,10 +67,10 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           <button
             onClick={() => onNavigate('landing')}
             className={`
-              rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
+              rounded-button px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
               ${isActiveView('landing') || isActiveView('wizard')
-                ? 'bg-cyan-600 text-white shadow-md'
-                : 'bg-white text-cyan-600 border border-cyan-600/20 hover:bg-cyan-50'
+                ? 'bg-primary text-white shadow-md hover:bg-primary-hover'
+                : 'bg-white text-primary border border-primary/20 hover:bg-primary-soft'
               }
             `}
           >
@@ -81,10 +81,10 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           <button
             onClick={() => onNavigate('simulationLibrary')}
             className={`
-              rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
+              rounded-button px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
               ${isActiveView('simulationLibrary') || isActiveView('userManagement')
-                ? 'bg-cyan-600 text-white shadow-md'
-                : 'bg-white text-cyan-600 border border-cyan-600/20 hover:bg-cyan-50'
+                ? 'bg-primary text-white shadow-md hover:bg-primary-hover'
+                : 'bg-white text-primary border border-primary/20 hover:bg-primary-soft'
               }
             `}
           >
@@ -98,29 +98,29 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="rounded-full px-3 py-1.5 bg-gray-100 hover:bg-gray-200 flex items-center gap-2 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold">
               {getInitials(userName)}
             </div>
             <div className="hidden lg:block text-left">
-              <div className="text-sm font-medium text-gray-900">{userName}</div>
+              <div className="text-sm font-medium text-text-main">{userName}</div>
               {appUser?.role === 'super_admin' && (
-                <div className="text-xs text-amber-600 font-semibold">Super Admin</div>
+                <div className="text-xs text-status-warning font-semibold">Super Admin</div>
               )}
               {appUser?.role === 'admin' && (
-                <div className="text-xs text-red-600 font-semibold">Admin</div>
+                <div className="text-xs text-status-error font-semibold">Admin</div>
               )}
             </div>
-            <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-text-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-card-hover border border-border-subtle py-1">
               <button
                 onClick={() => {
                   onNavigate('profile');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
               >
                 <User className="w-4 h-4" />
                 Profile
@@ -131,7 +131,7 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                   onNavigate('simulationLibrary');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
               >
                 <LayoutGrid className="w-4 h-4" />
                 Simulation Library
@@ -143,21 +143,21 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                     onNavigate('userManagement');
                     setIsDropdownOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                  className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
                 >
                   <Users className="w-4 h-4" />
                   Manage Users
                 </button>
               )}
 
-              <div className="border-t border-gray-200 my-1"></div>
+              <div className="border-t border-border-subtle my-1"></div>
 
               <button
                 onClick={() => {
                   onSignOut();
                   setIsDropdownOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-status-error hover:bg-red-50 flex items-center gap-2 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -172,8 +172,8 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
             className={`
               rounded-full p-2 transition-all
               ${isActiveView('landing') || isActiveView('wizard')
-                ? 'bg-cyan-600 text-white'
-                : 'bg-white text-cyan-600 border border-cyan-600/20'
+                ? 'bg-primary text-white'
+                : 'bg-white text-primary border border-primary/20'
               }
             `}
           >
@@ -185,8 +185,8 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
             className={`
               rounded-full p-2 transition-all
               ${isActiveView('simulationLibrary') || isActiveView('userManagement')
-                ? 'bg-cyan-600 text-white'
-                : 'bg-white text-cyan-600 border border-cyan-600/20'
+                ? 'bg-primary text-white'
+                : 'bg-white text-primary border border-primary/20'
               }
             `}
           >
