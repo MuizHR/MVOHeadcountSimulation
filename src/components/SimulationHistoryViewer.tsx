@@ -74,6 +74,33 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
     return config?.label || key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   };
 
+  const FUNCTION_OPTIONS: { value: string; label: string }[] = [
+    { value: 'cleaning_housekeeping', label: 'Cleaning & Housekeeping' },
+    { value: 'corporate_communication', label: 'Corporate Communication' },
+    { value: 'customer_stakeholder_management', label: 'Customer & Stakeholder Management' },
+    { value: 'finance_accounting', label: 'Finance & Accounting' },
+    { value: 'governance_risk_compliance', label: 'Governance, Risk & Compliance (GRC)' },
+    { value: 'hr', label: 'Human Resources' },
+    { value: 'it', label: 'Information Technology' },
+    { value: 'legal_company_secretarial', label: 'Legal & Company Secretarial' },
+    { value: 'maintenance_engineering', label: 'Maintenance & Engineering' },
+    { value: 'operations_service_delivery', label: 'Operations & Service Delivery' },
+    { value: 'procurement_vendor_management', label: 'Procurement & Vendor Management' },
+    { value: 'project_development_management', label: 'Project & Development Management' },
+    { value: 'property_facilities_management', label: 'Property & Facilities Management' },
+    { value: 'property_investment', label: 'Property Investment' },
+    { value: 'sales_leasing_tenancy', label: 'Sales, Leasing & Tenancy' },
+    { value: 'security_safety', label: 'Security & Safety' },
+  ];
+
+  const getFunctionDisplayName = (): string => {
+    if (simulationInputs.isCustomFunction && simulationInputs.customFunctionName) {
+      return simulationInputs.customFunctionName;
+    }
+    return FUNCTION_OPTIONS.find(f => f.value === simulationInputs.functionType)?.label ||
+           simulationInputs.functionType?.replace('_', ' ') || 'Not specified';
+  };
+
   const tabs = [
     { id: 0, label: 'Context', key: 'planning_context' },
     { id: 1, label: 'Setup', key: 'function_setup' },
@@ -251,58 +278,121 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
             )}
 
             {activeTab === 1 && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Function Setup</h2>
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Function & Sub-Function Setup
+                      {simulationInputs.isCustomFunction && (
+                        <span className="ml-2 text-sm font-normal text-teal-600">(Custom)</span>
+                      )}
+                    </h2>
+                    <p className="text-gray-600 mt-1">Define what functions you're planning for</p>
+                  </div>
                   <ReadOnlyBadge />
                 </div>
-                {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                  <div className="space-y-4">
-                    {subFunctions.map((sf: any, index: number) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{sf.name}</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-600">Work Type:</span>{' '}
-                            <span className="font-medium text-gray-900">{sf.workType || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Complexity:</span>{' '}
-                            <span className="font-medium text-gray-900 capitalize">{sf.complexity || 'N/A'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Main Function *
+                    </label>
+                    <input
+                      type="text"
+                      value={getFunctionDisplayName()}
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 cursor-not-allowed"
+                    />
                   </div>
-                ) : (
-                  <p className="text-gray-600">No sub-functions configured</p>
-                )}
+
+                  <div className="border-t pt-8">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Sub-Functions
+                    </h3>
+
+                    {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-semibold text-gray-900">
+                            Your Sub-Functions ({subFunctions.length})
+                          </h4>
+                        </div>
+                        <div className="space-y-3">
+                          {subFunctions.map((sf: any, index: number) => (
+                            <div
+                              key={sf.id}
+                              className="border border-gray-200 rounded-lg overflow-hidden"
+                            >
+                              <div className="flex items-center justify-between p-4 bg-gray-50">
+                                <div className="flex items-center gap-3 flex-1">
+                                  <span className="text-sm font-medium text-gray-500">
+                                    {index + 1}.
+                                  </span>
+                                  <span className="font-medium text-gray-900">
+                                    {sf.name}
+                                  </span>
+                                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                    ✓ Configured
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+                        <p className="text-gray-500">No sub-functions configured</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
             {activeTab === 2 && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Workload Drivers</h2>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Workload & Risk Inputs</h2>
+                    <p className="text-gray-600 mt-1">View workload drivers for each sub-function</p>
+                  </div>
                   <ReadOnlyBadge />
                 </div>
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {subFunctions.map((sf: any, index: number) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">{sf.name}</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <label className="block text-gray-600 mb-1">Volume</label>
-                            <div className="font-medium text-gray-900">{sf.volume || 'Not set'}</div>
+                      <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="bg-teal-600 text-white px-6 py-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm opacity-90">
+                                Sub-Function {index + 1} of {subFunctions.length}
+                              </div>
+                              <div className="text-xl font-bold mt-1">{sf.name}</div>
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-gray-600 mb-1">Complexity</label>
-                            <div className="font-medium text-gray-900 capitalize">{sf.complexity || 'Not set'}</div>
-                          </div>
-                          <div>
-                            <label className="block text-gray-600 mb-1">Workload Band</label>
-                            <div className="font-medium text-gray-900">{sf.workloadBand || 'Not set'}</div>
+                        </div>
+                        <div className="p-6 bg-gray-50">
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {sf.workTypeId && (
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Work Type</label>
+                                <div className="font-semibold text-gray-900">{sf.workTypeId}</div>
+                              </div>
+                            )}
+                            {sf.workloadDrivers?.totalWorkUnits && (
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Total Work Units</label>
+                                <div className="font-semibold text-gray-900">{sf.workloadDrivers.totalWorkUnits.typical || 'N/A'}</div>
+                              </div>
+                            )}
+                            {sf.workloadDrivers?.productivityUnitsPerPersonPerDay && (
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Productivity Rate</label>
+                                <div className="font-semibold text-gray-900">{sf.workloadDrivers.productivityUnitsPerPersonPerDay.typical || 'N/A'} units/day</div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -316,28 +406,52 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 3 && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
+                    <p className="text-gray-600 mt-1">View how work is structured and delivered</p>
+                  </div>
                   <ReadOnlyBadge />
                 </div>
                 {subFunctions && Array.isArray(subFunctions) && subFunctions.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {subFunctions.map((sf: any, index: number) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">{sf.name}</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <label className="block text-gray-600 mb-1">Structure</label>
-                            <div className="font-medium text-gray-900">{sf.structure || 'Not set'}</div>
+                      <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="bg-teal-600 text-white px-6 py-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm opacity-90">
+                                Sub-Function {index + 1} of {subFunctions.length}
+                              </div>
+                              <div className="text-xl font-bold mt-1">{sf.name}</div>
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-gray-600 mb-1">Delivery Model</label>
-                            <div className="font-medium text-gray-900">{sf.deliveryModel || 'Not set'}</div>
-                          </div>
-                          <div>
-                            <label className="block text-gray-600 mb-1">Automation Level</label>
-                            <div className="font-medium text-gray-900">{sf.automationLevel || 'Not set'}</div>
-                          </div>
+                        </div>
+                        <div className="p-6 bg-white space-y-4">
+                          {sf.operatingModel?.structure && (
+                            <div className="p-4 rounded-lg border-2 border-teal-600 bg-teal-50">
+                              <div className="text-sm font-medium text-gray-700 mb-1">Organizational Structure</div>
+                              <div className="font-semibold text-gray-900 capitalize">{sf.operatingModel.structure.replace('_', ' ')}</div>
+                            </div>
+                          )}
+                          {sf.operatingModel?.delivery && (
+                            <div className="p-4 rounded-lg border-2 border-teal-600 bg-teal-50">
+                              <div className="text-sm font-medium text-gray-700 mb-1">Delivery Model</div>
+                              <div className="font-semibold text-gray-900 capitalize">{sf.operatingModel.delivery.replace('_', ' ')}</div>
+                            </div>
+                          )}
+                          {sf.operatingModel?.automationLevel && (
+                            <div className="p-4 rounded-lg border-2 border-teal-600 bg-teal-50">
+                              <div className="text-sm font-medium text-gray-700 mb-1">Automation Level</div>
+                              <div className="font-semibold text-gray-900 capitalize">{sf.operatingModel.automationLevel.replace('_', ' ')}</div>
+                            </div>
+                          )}
+                          {sf.operatingModel?.coverage && (
+                            <div className="p-4 rounded-lg border-2 border-teal-600 bg-teal-50">
+                              <div className="text-sm font-medium text-gray-700 mb-1">Operating Hours / Coverage</div>
+                              <div className="font-semibold text-gray-900 capitalize">{sf.operatingModel.coverage.replace('_', ' ')}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -351,25 +465,78 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
             {activeTab === 4 && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Review Summary</h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Review & Calculate</h2>
+                    <p className="text-gray-600 mt-1">Review your inputs and simulation results</p>
+                  </div>
                   <ReadOnlyBadge />
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-4">Summary Metrics</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-blue-100">
-                      <div className="text-sm text-gray-600 mb-1">Total FTE</div>
-                      <div className="text-2xl font-bold text-gray-900">{simulation.total_fte || 'N/A'}</div>
+
+                <div className="space-y-6">
+                  <div className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Planning Summary</h3>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-blue-100">
-                      <div className="text-sm text-gray-600 mb-1">Monthly Cost</div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        MYR {(simulation.total_monthly_cost || 0).toLocaleString()}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Simulation Name:</span>
+                        <span className="font-medium text-gray-900">{simulation.simulation_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Planning Type:</span>
+                        <span className="font-medium text-gray-900 capitalize">
+                          {getPlanningTypeLabel(simulation.planning_type)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Function:</span>
+                        <span className="font-medium text-gray-900">
+                          {getFunctionDisplayName()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Operation Size:</span>
+                        <span className="font-medium text-teal-700">
+                          {getSizeOfOperationLabel(simulation.size_of_operation)}
+                        </span>
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-blue-100">
-                      <div className="text-sm text-gray-600 mb-1">Workload Score</div>
-                      <div className="text-2xl font-bold text-gray-900">{simulation.workload_score || 'N/A'}</div>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Sub-Functions Overview ({subFunctions.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {subFunctions.map((sf: any, index: number) => (
+                        <div key={sf.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-gray-500">{index + 1}.</span>
+                            <span className="font-medium text-gray-900">{sf.name}</span>
+                          </div>
+                          <span className="text-sm text-green-600 font-medium">✓ Configured</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4">Calculation Results</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="text-sm text-gray-600 mb-1">Total FTE</div>
+                        <div className="text-2xl font-bold text-gray-900">{simulation.total_fte || 'N/A'}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="text-sm text-gray-600 mb-1">Monthly Cost</div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          MYR {(simulation.total_monthly_cost || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="text-sm text-gray-600 mb-1">Workload Score</div>
+                        <div className="text-2xl font-bold text-gray-900">{simulation.workload_score || 'N/A'}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
