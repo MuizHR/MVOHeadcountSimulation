@@ -347,13 +347,10 @@ function AuthFlow() {
   );
 }
 
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
-      <AuthFlow />
-    </AuthProvider>
+    <div style={{ padding: 40, color: 'white', fontSize: 24 }}>
+      MVO App test – if you see this, React is working.
+    </div>
   );
 }
-
-
-export default function App()
