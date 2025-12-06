@@ -141,7 +141,7 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
   checkPageBreak();
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
-  doc.text('Report generated from JLG Group MVO & Headcount Simulator', 105, yPos, { align: 'center' });
+  doc.text('Report generated from JLG MVO & Headcount Simulator', 105, yPos, { align: 'center' });
 
   doc.save(`${simulation.simulation_name.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`);
 }
