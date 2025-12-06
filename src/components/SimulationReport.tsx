@@ -125,7 +125,7 @@ export function SimulationReport({ planningType, mainFunction, sizeOfOperation, 
   };
 
   const handleDownloadWord = () => {
-    let docContent = `JLG Group MVO & Headcount Simulation Report\n\n`;
+    let docContent = `JLG MVO & Headcount Simulation Report\n\n`;
     docContent += `Planning Type: ${formatLabel(planningType)}\n`;
     docContent += `Function: ${formatLabel(mainFunction)}\n`;
     docContent += `Size of Operation: ${formatLabel(sizeOfOperation)}\n`;
