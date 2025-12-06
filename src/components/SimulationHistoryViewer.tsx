@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, Briefcase, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { KPICards } from './dashboard/KPICards';
 import { SystemRoleCompositionPanel } from './dashboard/SystemRoleCompositionPanel';
 import { SubFunctionAccordion } from './dashboard/SubFunctionAccordion';
 import { HeadcountComparisonTable } from './dashboard/HeadcountComparisonTable';
 import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
+import { simulationHistoryService } from '../services/simulationHistoryService';
 
 interface SimulationHistoryViewerProps {
-  simulation: any;
-  onClose: () => void;
+  simulationId: string;
+  onBack: () => void;
 }
 
 function ReadOnlyBadge() {
@@ -71,9 +72,50 @@ function OptionDisplay({ selected, children }: OptionDisplayProps) {
   );
 }
 
-export function SimulationHistoryViewer({ simulation, onClose }: SimulationHistoryViewerProps) {
+export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHistoryViewerProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [expandedSubFunctions, setExpandedSubFunctions] = useState<Record<number, boolean>>({});
+  const [simulation, setSimulation] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSimulation();
+  }, [simulationId]);
+
+  const loadSimulation = async () => {
+    try {
+      const data = await simulationHistoryService.getSimulationById(simulationId);
+      setSimulation(data);
+    } catch (error) {
+      console.error('Error loading simulation:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading simulation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!simulation) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Simulation not found</p>
+          <button onClick={onBack} className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg">
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const inputPayload = simulation.input_payload || {};
   const resultPayload = simulation.result_payload || {};
@@ -144,7 +186,7 @@ export function SimulationHistoryViewer({ simulation, onClose }: SimulationHisto
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={onBack}
             className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
           >
             <X className="w-6 h-6" />
@@ -750,7 +792,7 @@ export function SimulationHistoryViewer({ simulation, onClose }: SimulationHisto
 
         <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
           <button
-            onClick={onClose}
+            onClick={onBack}
             className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
           >
             Close
