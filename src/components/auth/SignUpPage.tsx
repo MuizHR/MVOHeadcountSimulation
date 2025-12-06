@@ -164,7 +164,7 @@ export function SignUpPage({ onSignUp, onSwitchToLogin, onBack, isLoading, error
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          JLG Group MVO & Headcount Simulator
+          JLG MVO & Headcount Simulator
         </p>
       </div>
     </div>
