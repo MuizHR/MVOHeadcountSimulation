@@ -8,9 +8,10 @@ import { DuplicateSimulationDialog } from './DuplicateSimulationDialog';
 
 interface AdminSimulationsProps {
   onNavigate?: (view: string, data?: any) => void;
+  hideHeader?: boolean;
 }
 
-export const AdminSimulations: React.FC<AdminSimulationsProps> = ({ onNavigate }) => {
+export const AdminSimulations: React.FC<AdminSimulationsProps> = ({ onNavigate, hideHeader = false }) => {
   const { appUser, isAdmin } = useAuth();
   const [simulations, setSimulations] = useState<SimulationHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,19 +100,23 @@ export const AdminSimulations: React.FC<AdminSimulationsProps> = ({ onNavigate }
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-red-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Admin: All Simulations</h1>
-        </div>
-      </div>
+    <div className={hideHeader ? '' : 'max-w-7xl mx-auto px-4 py-8'}>
+      {!hideHeader && (
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8 text-red-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Admin: All Simulations</h1>
+            </div>
+          </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <p className="text-sm text-yellow-800">
-          <strong>Admin Mode:</strong> You are viewing all simulations from all users. Handle with care.
-        </p>
-      </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-yellow-800">
+              <strong>Admin Mode:</strong> You are viewing all simulations from all users. Handle with care.
+            </p>
+          </div>
+        </>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex gap-2 mb-4">

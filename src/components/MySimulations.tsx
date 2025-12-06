@@ -8,9 +8,10 @@ import { DuplicateSimulationDialog } from './DuplicateSimulationDialog';
 
 interface MySimulationsProps {
   onNavigate?: (view: string, data?: any) => void;
+  hideHeader?: boolean;
 }
 
-export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
+export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate, hideHeader = false }) => {
   const { appUser } = useAuth();
   const [simulations, setSimulations] = useState<SimulationHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,17 +96,19 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">My Simulations</h1>
-        <button
-          onClick={() => onNavigate?.('wizard')}
-          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:shadow-md transition-shadow flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Launch Simulator
-        </button>
-      </div>
+    <div className={hideHeader ? '' : 'max-w-7xl mx-auto px-4 py-8'}>
+      {!hideHeader && (
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">My Simulations</h1>
+          <button
+            onClick={() => onNavigate?.('wizard')}
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:shadow-md transition-shadow flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Launch Simulator
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex gap-2 mb-4">

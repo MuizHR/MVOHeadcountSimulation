@@ -10,14 +10,13 @@ import { ProfilePage } from './components/auth/ProfilePage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MOVALauncher } from './components/mova/MOVALauncher';
 import { MOVAWindow } from './components/mova/MOVAWindow';
-import { MySimulations } from './components/MySimulations';
-import { AdminSimulations } from './components/AdminSimulations';
+import { SimulationLibrary } from './components/SimulationLibrary';
 import { UserManagement } from './components/UserManagement';
 import { NavBar } from './components/NavBar';
 import { SimulationHistoryViewer } from './components/SimulationHistoryViewer';
 import { supabase } from './lib/supabase';
 
-type AppView = 'landing' | 'wizard' | 'profile' | 'mySimulations' | 'adminSimulations' | 'userManagement' | 'historyViewer' | 'duplicateSimulation';
+type AppView = 'landing' | 'wizard' | 'profile' | 'simulationLibrary' | 'userManagement' | 'historyViewer' | 'duplicateSimulation';
 
 function AuthenticatedApp() {
   const { user, appUser, signOut, isAdmin } = useAuth();
@@ -122,7 +121,7 @@ function AuthenticatedApp() {
           />
           <SimulationHistoryViewer
             simulationId={selectedSimulationId}
-            onBack={() => setCurrentView('mySimulations')}
+            onBack={() => setCurrentView('simulationLibrary')}
           />
           <MOVALauncher />
           <MOVAWindow />
@@ -131,7 +130,7 @@ function AuthenticatedApp() {
     );
   }
 
-  if (currentView === 'mySimulations') {
+  if (currentView === 'simulationLibrary') {
     return (
       <WizardProvider>
         <MOVAProvider>
@@ -142,36 +141,7 @@ function AuthenticatedApp() {
               onNavigate={setCurrentView}
               onSignOut={handleSignOut}
             />
-            <MySimulations onNavigate={(view, data) => {
-              if (view === 'view-simulation' && data?.simulationId) {
-                handleViewSimulation(data.simulationId);
-              } else if (view === 'duplicate-simulation' && data?.simulationId) {
-                setSelectedSimulationId(data.simulationId);
-                setCurrentView('duplicateSimulation');
-              } else {
-                setCurrentView(view as AppView);
-              }
-            }} />
-            <MOVALauncher />
-            <MOVAWindow />
-          </div>
-        </MOVAProvider>
-      </WizardProvider>
-    );
-  }
-
-  if (currentView === 'adminSimulations') {
-    return (
-      <WizardProvider>
-        <MOVAProvider>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <NavBar
-              currentView={currentView}
-              userName={userName || user?.email || 'User'}
-              onNavigate={setCurrentView}
-              onSignOut={handleSignOut}
-            />
-            <AdminSimulations onNavigate={(view, data) => {
+            <SimulationLibrary onNavigate={(view, data) => {
               if (view === 'view-simulation' && data?.simulationId) {
                 handleViewSimulation(data.simulationId);
               } else if (view === 'duplicate-simulation' && data?.simulationId) {

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Users, Home, History, Shield, User, LogOut, ChevronDown } from 'lucide-react';
+import { Users, Home, LayoutGrid, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavBarProps {
@@ -79,34 +79,18 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           </button>
 
           <button
-            onClick={() => onNavigate('mySimulations')}
+            onClick={() => onNavigate('simulationLibrary')}
             className={`
               rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
-              ${isActiveView('mySimulations')
+              ${isActiveView('simulationLibrary') || isActiveView('userManagement')
                 ? 'bg-cyan-600 text-white shadow-md'
                 : 'bg-white text-cyan-600 border border-cyan-600/20 hover:bg-cyan-50'
               }
             `}
           >
-            <History className="w-4 h-4" />
-            My Simulations
+            <LayoutGrid className="w-4 h-4" />
+            Simulation Library
           </button>
-
-          {isAdmin() && (
-            <button
-              onClick={() => onNavigate('adminSimulations')}
-              className={`
-                rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
-                ${isActiveView('adminSimulations') || isActiveView('userManagement')
-                  ? 'bg-cyan-600 text-white shadow-md'
-                  : 'bg-white text-cyan-600 border border-cyan-600/20 hover:bg-cyan-50'
-                }
-              `}
-            >
-              <Shield className="w-4 h-4" />
-              Admin
-            </button>
-          )}
         </nav>
 
         <div className="relative" ref={dropdownRef}>
@@ -142,29 +126,28 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                 Profile
               </button>
 
+              <button
+                onClick={() => {
+                  onNavigate('simulationLibrary');
+                  setIsDropdownOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Simulation Library
+              </button>
+
               {isAdmin() && (
-                <>
-                  <button
-                    onClick={() => {
-                      onNavigate('adminSimulations');
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
-                  >
-                    <Shield className="w-4 h-4" />
-                    All Simulations
-                  </button>
-                  <button
-                    onClick={() => {
-                      onNavigate('userManagement');
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
-                  >
-                    <Users className="w-4 h-4" />
-                    Manage Users
-                  </button>
-                </>
+                <button
+                  onClick={() => {
+                    onNavigate('userManagement');
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  Manage Users
+                </button>
               )}
 
               <div className="border-t border-gray-200 my-1"></div>
@@ -198,32 +181,17 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           </button>
 
           <button
-            onClick={() => onNavigate('mySimulations')}
+            onClick={() => onNavigate('simulationLibrary')}
             className={`
               rounded-full p-2 transition-all
-              ${isActiveView('mySimulations')
+              ${isActiveView('simulationLibrary') || isActiveView('userManagement')
                 ? 'bg-cyan-600 text-white'
                 : 'bg-white text-cyan-600 border border-cyan-600/20'
               }
             `}
           >
-            <History className="w-4 h-4" />
+            <LayoutGrid className="w-4 h-4" />
           </button>
-
-          {isAdmin() && (
-            <button
-              onClick={() => onNavigate('adminSimulations')}
-              className={`
-                rounded-full p-2 transition-all
-                ${isActiveView('adminSimulations') || isActiveView('userManagement')
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-white text-cyan-600 border border-cyan-600/20'
-                }
-              `}
-            >
-              <Shield className="w-4 h-4" />
-            </button>
-          )}
         </nav>
       </div>
     </header>
