@@ -356,11 +356,4 @@ function App() {
 }
 
 
-export default function App() {
-  return (
-    <div style={{ padding: 40, color: 'white', fontSize: 24 }}>
-      MVO App test – if you see this, React is working.
-    </div>
-  );
-}
-
+export default function App()
