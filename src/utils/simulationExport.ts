@@ -178,7 +178,7 @@ function generateSimulationReport(simulation: SimulationHistory): string {
     });
   }
 
-  content += `\n---\nReport generated from JLG Group MVO & Headcount Simulator\n`;
+  content += `\n---\nReport generated from JLG MVO & Headcount Simulator\n`;
 
   return content;
 }
