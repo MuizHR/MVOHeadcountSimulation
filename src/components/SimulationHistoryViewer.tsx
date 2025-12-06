@@ -3,10 +3,6 @@ import { ArrowLeft, Calendar, User, Briefcase } from 'lucide-react';
 import { SimulationHistory } from '../types/simulationHistory';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { useAuth } from '../contexts/AuthContext';
-import { KPICards } from './dashboard/KPICards';
-import { SystemRoleCompositionPanel } from './dashboard/SystemRoleCompositionPanel';
-import { SubFunctionAccordion } from './dashboard/SubFunctionAccordion';
-import { HeadcountComparisonTable } from './dashboard/HeadcountComparisonTable';
 import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
 
 interface SimulationHistoryViewerProps {
@@ -291,49 +287,124 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
             {activeTab === 5 && (
               <div className="space-y-6">
-                {simulationResult ? (
-                  <div className="space-y-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900">Simulation Results Dashboard</h2>
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
-                        <p className="text-sm text-yellow-800 font-medium">
-                          Read-Only View
-                        </p>
-                      </div>
-                    </div>
-
-                    <KPICards result={simulationResult} />
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      <div className="lg:col-span-2">
-                        <SubFunctionAccordion
-                          subFunctions={simulationResult.subFunctions}
-                          synchronizedResults={new Map(
-                            synchronizedResults.map((item: any) => [item.subFunctionId, item.result])
-                          )}
-                        />
-                      </div>
-
-                      <div>
-                        <SystemRoleCompositionPanel
-                          composition={simulationResult.mvoComposition}
-                        />
-                      </div>
-                    </div>
-
-                    <HeadcountComparisonTable
-                      subFunctions={simulationResult.subFunctions}
-                      synchronizedResults={new Map(
-                        synchronizedResults.map((item: any) => [item.subFunctionId, item.result])
-                      )}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600">No results data available</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      This simulation may not have been completed or saved properly.
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Simulation Results</h2>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      Read-Only View
                     </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg border border-cyan-200 shadow-sm">
+                    <div className="text-sm text-cyan-700 mb-1 font-medium">Total FTE</div>
+                    <div className="text-3xl font-bold text-cyan-900">{simulation.total_fte || 0}</div>
+                  </div>
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
+                    <div className="text-sm text-blue-700 mb-1 font-medium">Monthly Cost</div>
+                    <div className="text-3xl font-bold text-blue-900">
+                      MYR {(simulation.total_monthly_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                  <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="text-sm text-gray-700 mb-1 font-medium">Workload Score</div>
+                    <div className="text-3xl font-bold text-gray-900">{simulation.workload_score || 0}</div>
+                  </div>
+                </div>
+
+                {subFunctions && subFunctions.length > 0 && (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">Sub-Functions Breakdown</h3>
+                    </div>
+                    <div className="p-6">
+                      <div className="space-y-4">
+                        {subFunctions.map((sf: any, index: number) => {
+                          const sfResult = synchronizedResults.find((r: any) => r.subFunctionId === sf.id);
+                          const mvo = sfResult?.result?.mvo;
+
+                          return (
+                            <div key={index} className="border border-gray-200 rounded-lg p-5 bg-gray-50 hover:shadow-md transition-shadow">
+                              <div className="flex items-start justify-between mb-4">
+                                <div>
+                                  <h4 className="text-lg font-semibold text-gray-900">{sf.name}</h4>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    Work Type: <span className="font-medium">{sf.workType || 'N/A'}</span> •
+                                    Complexity: <span className="font-medium capitalize">{sf.complexity || 'N/A'}</span>
+                                  </p>
+                                </div>
+                                {mvo?.recommendedHeadcount && (
+                                  <div className="text-right bg-white px-4 py-2 rounded-lg border border-cyan-200">
+                                    <div className="text-xs text-gray-600 mb-1">Recommended FTE</div>
+                                    <div className="text-2xl font-bold text-cyan-700">{mvo.recommendedHeadcount}</div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {mvo && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
+                                  <div>
+                                    <div className="text-xs text-gray-600 mb-1">Avg Duration</div>
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      {mvo.avgDurationDays ? `${Math.round(mvo.avgDurationDays)} days` : 'N/A'}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-600 mb-1">Success Rate</div>
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      {mvo.successRatePct ? `${Math.round(mvo.successRatePct)}%` : 'N/A'}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-600 mb-1">Monthly Cost</div>
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      MYR {mvo.avgMonthlyCostRm ? Math.round(mvo.avgMonthlyCostRm).toLocaleString() : 'N/A'}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-600 mb-1">Risk Level</div>
+                                    <div className="text-sm font-semibold text-gray-900 capitalize">
+                                      {mvo.riskCategory || 'N/A'}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {simulationResult?.mvoComposition && (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">System-Suggested Role Composition</h3>
+                    </div>
+                    <div className="p-6">
+                      <div className="space-y-3">
+                        {simulationResult.mvoComposition.map((role: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div>
+                              <div className="font-semibold text-gray-900">{role.roleName}</div>
+                              <div className="text-sm text-gray-600">
+                                {role.minSalary && role.maxSalary ? (
+                                  <>MYR {role.minSalary.toLocaleString()} - {role.maxSalary.toLocaleString()}</>
+                                ) : (
+                                  'Salary range not available'
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-cyan-700">{role.count}</div>
+                              <div className="text-xs text-gray-600">positions</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
