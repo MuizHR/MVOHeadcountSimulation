@@ -132,20 +132,13 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
             for new projects, functions, and business units with AI-driven insights.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex items-center justify-center">
             <button
               onClick={onStartSimulation}
               className="px-8 py-4 bg-primary text-white font-semibold text-lg rounded-button hover:bg-primary-hover transition-all shadow-card-hover flex items-center gap-3"
             >
               <Sparkles className="w-6 h-6" />
               Launch Simulator
-            </button>
-            <button
-              onClick={onStartSimulation}
-              className="px-8 py-4 bg-white text-primary font-semibold text-lg rounded-button border-2 border-primary hover:bg-primary-soft transition-all shadow-card flex items-center gap-3"
-            >
-              <LayoutGrid className="w-5 h-5" />
-              View Simulation Library
             </button>
           </div>
 
