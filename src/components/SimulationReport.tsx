@@ -156,7 +156,7 @@ export function SimulationReport({ planningType, mainFunction, sizeOfOperation, 
     const doc = new jsPDF();
 
     doc.setFontSize(20);
-    doc.text('JLG Group MVO & Headcount Simulation Report', 14, 20);
+    doc.text('JLG MVO & Headcount Simulation Report', 14, 20);
 
     doc.setFontSize(12);
     doc.text(`Planning Type: ${formatLabel(planningType)}`, 14, 35);
