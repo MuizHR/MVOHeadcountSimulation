@@ -355,7 +355,6 @@ function App() {
   );
 }
 
-// TEMP TEST – put this at the bottom of App.tsx
 
 export default function App() {
   return (
