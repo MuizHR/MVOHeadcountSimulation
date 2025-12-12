@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, Edit } from 'lucide-react';
 import { useWizard } from '../../contexts/WizardContext';
 import { WizardNavigation } from './WizardNavigation';
 import { identifyMVO } from '../../utils/mvoEngine';
@@ -31,6 +31,7 @@ export function Step5Review() {
     state,
     previousStep,
     nextStep,
+    goToStep,
     setCalculated,
     setSynchronizedResults,
     updateSubFunctions,
@@ -45,6 +46,41 @@ export function Step5Review() {
     }
     return FUNCTION_OPTIONS.find(f => f.value === simulationInputs.functionType)?.label ||
            simulationInputs.functionType.replace('_', ' ');
+  };
+
+  const getScopeDriverLabel = (): string => {
+    if (!simulationInputs.scopeDriverType || !simulationInputs.scopeDriverValue) return 'Not specified';
+
+    let label = '';
+    switch (simulationInputs.scopeDriverType) {
+      case 'employees_supported':
+        label = 'Employees Supported';
+        break;
+      case 'sites_locations':
+        label = '# Sites / Locations';
+        break;
+      case 'projects_portfolios':
+        label = '# Projects / Portfolios';
+        break;
+    }
+    return `${label}: ${simulationInputs.scopeDriverValue}`;
+  };
+
+  const getPlanningTypeLabel = (): string => {
+    switch (simulationInputs.planningType) {
+      case 'new_project':
+        return 'New Project';
+      case 'new_function':
+        return 'New Function';
+      case 'new_business_unit':
+        return 'New Business Unit';
+      case 'restructuring':
+        return 'Restructuring';
+      case 'bau_monthly_operations':
+        return 'BAU / Monthly Operations';
+      default:
+        return simulationInputs.planningType.replace('_', ' ');
+    }
   };
 
   const handleCalculate = async () => {
@@ -109,18 +145,43 @@ export function Step5Review() {
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Planning Summary</h3>
+              <button
+                onClick={() => goToStep('planning_context')}
+                className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </button>
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Simulation Name:</span>
                 <span className="font-medium text-gray-900">{simulationInputs.simulationName}</span>
               </div>
+              {simulationInputs.entity && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Entity / Company:</span>
+                  <span className="font-medium text-gray-900">{simulationInputs.entity}</span>
+                </div>
+              )}
+              {simulationInputs.region && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Location / Region:</span>
+                  <span className="font-medium text-gray-900">{simulationInputs.region}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Planning Type:</span>
-                <span className="font-medium text-gray-900 capitalize">
-                  {simulationInputs.planningType.replace('_', ' ')}
+                <span className="font-medium text-gray-900">
+                  {getPlanningTypeLabel()}
                 </span>
               </div>
+              {(simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue) && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Scope Driver:</span>
+                  <span className="font-medium text-gray-900">{getScopeDriverLabel()}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Function:</span>
                 <span className="font-medium text-gray-900">
@@ -133,8 +194,17 @@ export function Step5Review() {
                   {simulationInputs.operationSize === 'small_lean' && 'Small / Lean (minimum team)'}
                   {simulationInputs.operationSize === 'medium_standard' && 'Medium / Standard (normal operations)'}
                   {simulationInputs.operationSize === 'large_extended' && 'Large / Extended (full scale)'}
+                  {simulationInputs.autoSizeEnabled && simulationInputs.scopeDriverType && ' (Auto-suggested)'}
                 </span>
               </div>
+              {simulationInputs.contextObjectives && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <span className="text-gray-600 block mb-2">Context & Objectives:</span>
+                  <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                    {simulationInputs.contextObjectives}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

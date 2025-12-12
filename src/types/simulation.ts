@@ -1,8 +1,10 @@
 import { PlanningTypeKey, SizeOfOperationKey } from './planningConfig';
 
-export type PlanningType = 'new_project' | 'new_function' | 'new_business_unit' | 'restructuring';
+export type PlanningType = 'new_project' | 'new_function' | 'new_business_unit' | 'restructuring' | 'bau_monthly_operations';
 
 export type OperationSize = 'small_lean' | 'medium_standard' | 'large_extended';
+
+export type ScopeDriverType = 'employees_supported' | 'sites_locations' | 'projects_portfolios';
 
 export type FunctionType =
   | 'cleaning_housekeeping'
@@ -47,11 +49,17 @@ export interface WorkforceMix {
 
 export interface SimulationInputs {
   simulationName: string;
+  entity?: string;
+  region?: string;
   planningType: PlanningType;
+  scopeDriverType?: ScopeDriverType;
+  scopeDriverValue?: number;
+  autoSizeEnabled?: boolean;
   operationSize: OperationSize;
   planningTypeKey?: PlanningTypeKey;
   sizeOfOperationKey?: SizeOfOperationKey;
   contextNotes?: string;
+  contextObjectives?: string;
   functionType: FunctionType;
   isCustomFunction?: boolean;
   customFunctionName?: string;
@@ -75,8 +83,14 @@ export interface SimulationInputs {
 
 export const DEFAULT_SIMULATION_INPUTS: SimulationInputs = {
   simulationName: '',
+  entity: undefined,
+  region: undefined,
   planningType: 'new_project',
+  scopeDriverType: undefined,
+  scopeDriverValue: undefined,
+  autoSizeEnabled: true,
   operationSize: 'medium_standard',
+  contextObjectives: undefined,
   functionType: 'hr',
   natureOfWork: 'back_office',
   projectLength: 12,
@@ -200,6 +214,27 @@ export function getFieldVisibility(planningType: PlanningType): FieldVisibility 
         currentMonthlyCost: true,
         restructuringGoal: true,
         targetSavings: true,
+      };
+
+    case 'bau_monthly_operations':
+      return {
+        functionType: true,
+        natureOfWork: true,
+        projectLength: false,
+        totalProjectValue: false,
+        workloadLevel: true,
+        complexityLevel: true,
+        serviceLevel: true,
+        complianceIntensity: true,
+        automationPotential: true,
+        outsourcingLevel: true,
+        expectedGrowth: false,
+        digitalMaturity: true,
+        workforceMix: true,
+        existingHeadcount: false,
+        currentMonthlyCost: false,
+        restructuringGoal: false,
+        targetSavings: false,
       };
 
     default:

@@ -5,7 +5,14 @@ import { SimulationResult } from '../types/dashboardResult';
 
 export interface ExportData {
   simulationName: string;
+  entity?: string;
+  region?: string;
   planningType: string;
+  scopeDriverType?: string;
+  scopeDriverValue?: number;
+  operationSize: string;
+  autoSizeEnabled?: boolean;
+  contextObjectives?: string;
   sizeOfOperation: string;
   totalFte: number;
   avgDurationDays: number;
@@ -16,6 +23,90 @@ export interface ExportData {
 
 export async function exportToWord(data: ExportData): Promise<void> {
   try {
+    const getScopeDriverLabel = (): string => {
+      if (!data.scopeDriverType || !data.scopeDriverValue) return 'Not specified';
+      let label = '';
+      switch (data.scopeDriverType) {
+        case 'employees_supported': label = 'Employees Supported'; break;
+        case 'sites_locations': label = '# Sites/Locations'; break;
+        case 'projects_portfolios': label = '# Projects/Portfolios'; break;
+      }
+      return `${label}: ${data.scopeDriverValue}`;
+    };
+
+    const contextSection: Paragraph[] = [
+      new Paragraph({
+        text: 'Simulation Context',
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 300, after: 200 }
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Simulation Name: ', bold: true }),
+          new TextRun(data.simulationName)
+        ],
+        spacing: { after: 100 }
+      })
+    ];
+
+    if (data.entity) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Entity / Company: ', bold: true }),
+          new TextRun(data.entity)
+        ],
+        spacing: { after: 100 }
+      }));
+    }
+
+    if (data.region) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Location / Region: ', bold: true }),
+          new TextRun(data.region)
+        ],
+        spacing: { after: 100 }
+      }));
+    }
+
+    contextSection.push(new Paragraph({
+      children: [
+        new TextRun({ text: 'Planning Type: ', bold: true }),
+        new TextRun(data.planningType)
+      ],
+      spacing: { after: 100 }
+    }));
+
+    if (data.scopeDriverType && data.scopeDriverValue) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Scope Driver: ', bold: true }),
+          new TextRun(getScopeDriverLabel())
+        ],
+        spacing: { after: 100 }
+      }));
+    }
+
+    contextSection.push(new Paragraph({
+      children: [
+        new TextRun({ text: 'Operation Size: ', bold: true }),
+        new TextRun(data.sizeOfOperation + (data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : ''))
+      ],
+      spacing: { after: 100 }
+    }));
+
+    if (data.contextObjectives) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Context & Objectives: ', bold: true }),
+          new TextRun(data.contextObjectives)
+        ],
+        spacing: { after: 300 }
+      }));
+    } else {
+      contextSection.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+    }
+
     const doc = new Document({
       sections: [{
         properties: {},
@@ -26,32 +117,7 @@ export async function exportToWord(data: ExportData): Promise<void> {
             alignment: AlignmentType.CENTER,
             spacing: { after: 400 }
           }),
-          new Paragraph({
-            text: 'Simulation Details',
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300, after: 200 }
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Project/Simulation Name: ', bold: true }),
-              new TextRun(data.simulationName)
-            ],
-            spacing: { after: 100 }
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Planning Type: ', bold: true }),
-              new TextRun(data.planningType)
-            ],
-            spacing: { after: 100 }
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Size of Operation: ', bold: true }),
-              new TextRun(data.sizeOfOperation)
-            ],
-            spacing: { after: 300 }
-          }),
+          ...contextSection,
           new Paragraph({
             text: 'MVO Recommendation',
             heading: HeadingLevel.HEADING_2,
@@ -125,31 +191,72 @@ export async function exportToWord(data: ExportData): Promise<void> {
 
 export function exportToPDF(data: ExportData): void {
   try {
+    const getScopeDriverLabel = (): string => {
+      if (!data.scopeDriverType || !data.scopeDriverValue) return 'Not specified';
+      let label = '';
+      switch (data.scopeDriverType) {
+        case 'employees_supported': label = 'Employees Supported'; break;
+        case 'sites_locations': label = '# Sites/Locations'; break;
+        case 'projects_portfolios': label = '# Projects/Portfolios'; break;
+      }
+      return `${label}: ${data.scopeDriverValue}`;
+    };
+
     const doc = new jsPDF();
 
     doc.setFontSize(20);
     doc.text('MVO Results Report', 105, 20, { align: 'center' });
 
     doc.setFontSize(16);
-    doc.text('Simulation Details', 20, 40);
+    doc.text('Simulation Context', 20, 40);
 
     doc.setFontSize(12);
-    doc.text(`Project/Simulation Name: ${data.simulationName}`, 20, 55);
-    doc.text(`Planning Type: ${data.planningType}`, 20, 65);
-    doc.text(`Size of Operation: ${data.sizeOfOperation}`, 20, 75);
+    let yPos = 55;
+    doc.text(`Simulation Name: ${data.simulationName}`, 20, yPos);
+    yPos += 10;
+
+    if (data.entity) {
+      doc.text(`Entity / Company: ${data.entity}`, 20, yPos);
+      yPos += 10;
+    }
+
+    if (data.region) {
+      doc.text(`Location / Region: ${data.region}`, 20, yPos);
+      yPos += 10;
+    }
+
+    doc.text(`Planning Type: ${data.planningType}`, 20, yPos);
+    yPos += 10;
+
+    if (data.scopeDriverType && data.scopeDriverValue) {
+      doc.text(`Scope Driver: ${getScopeDriverLabel()}`, 20, yPos);
+      yPos += 10;
+    }
+
+    doc.text(`Operation Size: ${data.sizeOfOperation}${data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : ''}`, 20, yPos);
+    yPos += 10;
+
+    if (data.contextObjectives) {
+      doc.setFontSize(11);
+      const lines = doc.splitTextToSize(`Context & Objectives: ${data.contextObjectives}`, 170);
+      doc.text(lines, 20, yPos);
+      yPos += lines.length * 6 + 5;
+    }
+
+    yPos += 5;
 
     doc.setFontSize(16);
-    doc.text('MVO Recommendation', 20, 95);
+    doc.text('MVO Recommendation', 20, yPos);
+    yPos += 15;
 
     doc.setFontSize(12);
-    const yStart = 110;
     const lineHeight = 10;
 
-    doc.text(`FTE: ${data.totalFte.toFixed(1)}`, 30, yStart);
-    doc.text(`Average Duration: ${data.avgDurationDays} days`, 30, yStart + lineHeight);
-    doc.text(`P90 Duration: ${data.p90DurationDays} days`, 30, yStart + lineHeight * 2);
-    doc.text(`Success Rate: ${data.successRatePct.toFixed(1)}%`, 30, yStart + lineHeight * 3);
-    doc.text(`Monthly Cost: RM ${Math.round(data.avgMonthlyCostRm).toLocaleString()}`, 30, yStart + lineHeight * 4);
+    doc.text(`FTE: ${data.totalFte.toFixed(1)}`, 30, yPos);
+    doc.text(`Average Duration: ${data.avgDurationDays} days`, 30, yPos + lineHeight);
+    doc.text(`P90 Duration: ${data.p90DurationDays} days`, 30, yPos + lineHeight * 2);
+    doc.text(`Success Rate: ${data.successRatePct.toFixed(1)}%`, 30, yPos + lineHeight * 3);
+    doc.text(`Monthly Cost: RM ${Math.round(data.avgMonthlyCostRm).toLocaleString()}`, 30, yPos + lineHeight * 4);
 
     doc.setFontSize(8);
     doc.text('Generated by MVO Planning Tool', 105, 280, { align: 'center' });
@@ -163,15 +270,47 @@ export function exportToPDF(data: ExportData): void {
 
 export function exportToExcel(data: ExportData): void {
   try {
+    const getScopeDriverLabel = (): string => {
+      if (!data.scopeDriverType || !data.scopeDriverValue) return 'Not specified';
+      let label = '';
+      switch (data.scopeDriverType) {
+        case 'employees_supported': label = 'Employees Supported'; break;
+        case 'sites_locations': label = '# Sites/Locations'; break;
+        case 'projects_portfolios': label = '# Projects/Portfolios'; break;
+      }
+      return `${label}: ${data.scopeDriverValue}`;
+    };
+
     const workbook = XLSX.utils.book_new();
 
-    const detailsData = [
+    const detailsData: any[][] = [
       ['MVO Results Report'],
       [],
-      ['Simulation Details'],
-      ['Project/Simulation Name', data.simulationName],
-      ['Planning Type', data.planningType],
-      ['Size of Operation', data.sizeOfOperation],
+      ['Simulation Context'],
+      ['Simulation Name', data.simulationName]
+    ];
+
+    if (data.entity) {
+      detailsData.push(['Entity / Company', data.entity]);
+    }
+
+    if (data.region) {
+      detailsData.push(['Location / Region', data.region]);
+    }
+
+    detailsData.push(['Planning Type', data.planningType]);
+
+    if (data.scopeDriverType && data.scopeDriverValue) {
+      detailsData.push(['Scope Driver', getScopeDriverLabel()]);
+    }
+
+    detailsData.push(['Operation Size', data.sizeOfOperation + (data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : '')]);
+
+    if (data.contextObjectives) {
+      detailsData.push(['Context & Objectives', data.contextObjectives]);
+    }
+
+    detailsData.push(
       [],
       ['MVO Recommendation'],
       ['Metric', 'Value'],
@@ -180,7 +319,7 @@ export function exportToExcel(data: ExportData): void {
       ['P90 Duration (days)', data.p90DurationDays],
       ['Success Rate', `${data.successRatePct.toFixed(1)}%`],
       ['Monthly Cost (RM)', `RM ${Math.round(data.avgMonthlyCostRm).toLocaleString()}`]
-    ];
+    );
 
     const worksheet = XLSX.utils.aoa_to_sheet(detailsData);
 

@@ -177,6 +177,12 @@ export function Step6ResultsDashboard() {
           business_area: businessArea,
           planning_type: simulationInputs.planningTypeKey || 'new_function',
           size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          entity: simulationInputs.entity,
+          region: simulationInputs.region,
+          scope_driver_type: simulationInputs.scopeDriverType,
+          scope_driver_value: simulationInputs.scopeDriverValue,
+          auto_size_enabled: simulationInputs.autoSizeEnabled,
+          context_objectives: simulationInputs.contextObjectives,
           workload_score: Math.round(workloadScore),
           total_fte: simulationResult.totalFte,
           total_monthly_cost: simulationResult.avgMonthlyCostRm,
@@ -191,6 +197,12 @@ export function Step6ResultsDashboard() {
           business_area: businessArea,
           planning_type: simulationInputs.planningTypeKey || 'new_function',
           size_of_operation: simulationInputs.sizeOfOperationKey || 'medium',
+          entity: simulationInputs.entity,
+          region: simulationInputs.region,
+          scope_driver_type: simulationInputs.scopeDriverType,
+          scope_driver_value: simulationInputs.scopeDriverValue,
+          auto_size_enabled: simulationInputs.autoSizeEnabled,
+          context_objectives: simulationInputs.contextObjectives,
           workload_score: Math.round(workloadScore),
           total_fte: simulationResult.totalFte,
           total_monthly_cost: simulationResult.avgMonthlyCostRm,
@@ -235,7 +247,14 @@ export function Step6ResultsDashboard() {
     }
     return {
       simulationName: simulationResult.simulationName,
+      entity: simulationInputs.entity,
+      region: simulationInputs.region,
       planningType: planningTypeLabel,
+      scopeDriverType: simulationInputs.scopeDriverType,
+      scopeDriverValue: simulationInputs.scopeDriverValue,
+      operationSize: sizeOfOperationLabel,
+      autoSizeEnabled: simulationInputs.autoSizeEnabled,
+      contextObjectives: simulationInputs.contextObjectives,
       sizeOfOperation: sizeOfOperationLabel,
       totalFte: simulationResult.totalFte,
       avgDurationDays: simulationResult.avgDurationDays,
@@ -344,6 +363,24 @@ export function Step6ResultsDashboard() {
     );
   }
 
+  const getScopeDriverLabel = (): string => {
+    if (!simulationInputs.scopeDriverType || !simulationInputs.scopeDriverValue) return '';
+
+    let label = '';
+    switch (simulationInputs.scopeDriverType) {
+      case 'employees_supported':
+        label = 'Employees Supported';
+        break;
+      case 'sites_locations':
+        label = 'Sites/Locations';
+        break;
+      case 'projects_portfolios':
+        label = 'Projects/Portfolios';
+        break;
+    }
+    return `${label}: ${simulationInputs.scopeDriverValue}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -351,9 +388,22 @@ export function Step6ResultsDashboard() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             MVO Results: {simulationResult.simulationName}
           </h1>
-          <p className="text-gray-600">
-            Planning Type: {planningTypeLabel} • Size of Operation: {sizeOfOperationLabel}
-          </p>
+          <div className="space-y-1">
+            <p className="text-gray-600">
+              {simulationInputs.entity && <span>{simulationInputs.entity} • </span>}
+              {simulationInputs.region && <span>{simulationInputs.region} • </span>}
+              Planning Type: {planningTypeLabel}
+            </p>
+            <p className="text-gray-600">
+              {simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue && (
+                <span>{getScopeDriverLabel()} • </span>
+              )}
+              Size of Operation: {sizeOfOperationLabel}
+              {simulationInputs.autoSizeEnabled && simulationInputs.scopeDriverType && (
+                <span className="text-teal-600"> (Auto-suggested)</span>
+              )}
+            </p>
+          </div>
         </div>
 
         <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-2 border-teal-300 rounded-xl px-6 py-4 mb-6">
