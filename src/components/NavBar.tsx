@@ -40,24 +40,24 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
       <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <button
           onClick={() => onNavigate('landing')}
-          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-md flex-shrink-0 p-1.5">
             <img src="/jlg_logo_1.png" alt="JLG" className="w-full h-full object-contain" />
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden sm:block text-left">
             <div className="text-text-main font-bold text-base md:text-lg leading-tight">
               JLG
             </div>
-            <div className="text-primary text-xs font-medium">
+            <div className="text-primary text-xs font-medium leading-tight">
               MVO & Headcount Simulator
             </div>
           </div>
-          <div className="sm:hidden">
+          <div className="sm:hidden text-left">
             <div className="text-text-main font-bold text-base leading-tight">
               JLG
             </div>
-            <div className="text-primary text-xs font-medium">
+            <div className="text-primary text-xs font-medium leading-tight">
               MVO Simulator
             </div>
           </div>
