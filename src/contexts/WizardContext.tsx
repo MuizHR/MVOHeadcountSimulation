@@ -4,6 +4,10 @@ import { SimulationInputs, DEFAULT_SIMULATION_INPUTS } from '../types/simulation
 import { SubFunction } from '../types/subfunction';
 import { ScenarioResult } from '../types/scenario';
 import { MonteCarloInputs, DEFAULT_MONTE_CARLO_INPUTS, SynchronizedResults } from '../types/monteCarlo';
+import type { CanonicalSimulation } from '../types/canonicalSimulation';
+import { CURRENT_SCHEMA_VERSION, CURRENT_ENGINE_VERSION } from '../types/canonicalSimulation';
+import { migrateSimulation, canonicalToLegacy } from '../utils/simulationMigration';
+import { persistenceService } from '../services/persistenceAdapter';
 
 interface WizardContextType {
   state: WizardState;
@@ -26,6 +30,10 @@ interface WizardContextType {
   synchronizedResults: Map<string, SynchronizedResults>;
   setSynchronizedResults: (results: Map<string, SynchronizedResults>) => void;
   loadFromSimulation: (inputPayload: any) => void;
+  saveSimulation: () => Promise<CanonicalSimulation>;
+  loadSimulationById: (simulationId: string) => Promise<boolean>;
+  currentSimulationId: string | null;
+  setCurrentSimulationId: (id: string | null) => void;
   reset: () => void;
   duplicateSimulationId: string | null;
   setDuplicateSimulationId: (id: string | null) => void;
@@ -48,6 +56,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [monteCarloInputs, setMonteCarloInputs] = useState<MonteCarloInputs>(DEFAULT_MONTE_CARLO_INPUTS);
   const [synchronizedResults, setSynchronizedResults] = useState<Map<string, SynchronizedResults>>(new Map());
   const [duplicateSimulationId, setDuplicateSimulationId] = useState<string | null>(null);
+  const [currentSimulationId, setCurrentSimulationId] = useState<string | null>(null);
 
   const goToStep = (step: WizardStep) => {
     setState(prev => ({ ...prev, currentStep: step }));
@@ -149,11 +158,92 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const saveSimulation = async (): Promise<CanonicalSimulation> => {
+    const canonical: CanonicalSimulation = {
+      id: currentSimulationId || undefined,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      context: {
+        simulationName: state.simulationInputs.simulationName,
+        entity: state.simulationInputs.entity || null,
+        region: state.simulationInputs.region || null,
+        planningType: state.simulationInputs.planningType,
+        planningTypeKey: state.simulationInputs.planningTypeKey,
+        scopeDriverType: state.simulationInputs.scopeDriverType || null,
+        scopeDriverValue: state.simulationInputs.scopeDriverValue || null,
+        autoSizeEnabled: state.simulationInputs.autoSizeEnabled,
+        operationSize: state.simulationInputs.operationSize,
+        sizeOfOperationKey: state.simulationInputs.sizeOfOperationKey,
+        contextNotes: state.simulationInputs.contextNotes || null,
+        contextObjectives: state.simulationInputs.contextObjectives || null,
+      },
+      setup: {
+        functionType: state.simulationInputs.functionType,
+        isCustomFunction: state.simulationInputs.isCustomFunction,
+        customFunctionName: state.simulationInputs.customFunctionName || null,
+      },
+      workload: {
+        natureOfWork: state.simulationInputs.natureOfWork,
+        projectLength: state.simulationInputs.projectLength || null,
+        totalProjectValue: state.simulationInputs.totalProjectValue || null,
+        workloadLevel: state.simulationInputs.workloadLevel,
+        complexityLevel: state.simulationInputs.complexityLevel,
+        serviceLevel: state.simulationInputs.serviceLevel,
+        complianceIntensity: state.simulationInputs.complianceIntensity,
+        automationPotential: state.simulationInputs.automationPotential,
+        outsourcingLevel: state.simulationInputs.outsourcingLevel,
+        expectedGrowth: state.simulationInputs.expectedGrowth || null,
+        digitalMaturity: state.simulationInputs.digitalMaturity,
+        existingHeadcount: state.simulationInputs.existingHeadcount || null,
+        currentMonthlyCost: state.simulationInputs.currentMonthlyCost || null,
+        restructuringGoal: state.simulationInputs.restructuringGoal || null,
+        targetSavings: state.simulationInputs.targetSavings || null,
+      },
+      operatingModel: {
+        workforceMix: state.simulationInputs.workforceMix,
+      },
+      results: state.scenarios.length > 0 ? {
+        engineVersion: CURRENT_ENGINE_VERSION,
+        scenarios: state.scenarios,
+        selectedScenario: state.selectedScenario || undefined,
+        calculatedAt: new Date().toISOString(),
+      } : undefined,
+      selectedScenarioType: state.selectedScenario?.type || null,
+    };
+
+    const saved = await persistenceService.saveSimulation(canonical);
+    setCurrentSimulationId(saved.id || null);
+    return saved;
+  };
+
+  const loadSimulationById = async (simulationId: string): Promise<boolean> => {
+    try {
+      const canonical = await persistenceService.loadSimulation(simulationId);
+      if (!canonical) return false;
+
+      const legacyInputs = canonicalToLegacy(canonical);
+
+      setState(prev => ({
+        ...prev,
+        simulationInputs: legacyInputs,
+        scenarios: canonical.results?.scenarios || [],
+        selectedScenario: canonical.results?.selectedScenario || null,
+        isCalculated: !!canonical.results,
+      }));
+
+      setCurrentSimulationId(canonical.id || null);
+      return true;
+    } catch (error) {
+      console.error('Error loading simulation:', error);
+      return false;
+    }
+  };
+
   const reset = () => {
     setState(INITIAL_STATE);
     setSynchronizedResults(new Map());
     setMonteCarloInputs(DEFAULT_MONTE_CARLO_INPUTS);
     setDuplicateSimulationId(null);
+    setCurrentSimulationId(null);
   };
 
   return (
@@ -179,6 +269,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         synchronizedResults,
         setSynchronizedResults,
         loadFromSimulation,
+        saveSimulation,
+        loadSimulationById,
+        currentSimulationId,
+        setCurrentSimulationId,
         reset,
         duplicateSimulationId,
         setDuplicateSimulationId,
