@@ -42,8 +42,8 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           onClick={() => onNavigate('landing')}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-md flex-shrink-0">
-            <Users className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-md flex-shrink-0 p-1.5">
+            <img src="/jlg_logo_1.png" alt="JLG" className="w-full h-full object-contain" />
           </div>
           <div className="hidden sm:block">
             <div className="text-text-main font-bold text-base md:text-lg leading-tight">
@@ -120,9 +120,8 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                   onNavigate('profile');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft transition-colors"
               >
-                <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
                 Profile
               </button>
 

@@ -215,8 +215,7 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
 
             <div className="space-y-6">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Full Name
                 </label>
                 {isEditing ? (

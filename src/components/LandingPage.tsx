@@ -52,8 +52,8 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-border-subtle shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-md">
-              <Users className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-md p-1.5">
+              <img src="/jlg_logo_1.png" alt="JLG" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="text-text-main font-bold text-lg">JLG</div>
@@ -69,10 +69,9 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
                 </div>
                 <button
                   onClick={onShowProfile}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-white border border-primary/20 rounded-button hover:bg-primary-soft transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-primary bg-white border border-primary/20 rounded-button hover:bg-primary-soft transition-colors"
                   title="Profile"
                 >
-                  <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
                   Profile
                 </button>
                 <button
