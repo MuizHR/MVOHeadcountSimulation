@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Users, Home, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
+import { Users, Home, LayoutGrid, LogOut, ChevronDown, UserCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavBarProps {
@@ -120,8 +120,9 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                   onNavigate('profile');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
               >
+                <UserCircle className="w-4 h-4" />
                 Profile
               </button>
 
