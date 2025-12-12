@@ -79,7 +79,12 @@ function AuthenticatedApp() {
   if (currentView === 'landing') {
     return (
       <MOVAProvider>
-        <LandingPage key={refreshKey} onStartSimulation={handleStartSimulation} onShowProfile={handleShowProfile} />
+        <LandingPage
+          key={refreshKey}
+          onStartSimulation={handleStartSimulation}
+          onShowProfile={handleShowProfile}
+          onNavigate={setCurrentView}
+        />
         <MOVALauncher />
         <MOVAWindow />
       </MOVAProvider>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Sparkles, TrendingUp, Users, LogOut, LogIn, UserPlus, ChevronDown, UserCircle } from 'lucide-react';
+import { Sparkles, TrendingUp, Users, LogOut, LogIn, UserPlus, ChevronDown, UserCircle, LayoutGrid } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -8,10 +8,11 @@ interface LandingPageProps {
   onShowProfile?: () => void;
   onShowLogin?: () => void;
   onShowSignUp?: () => void;
+  onNavigate?: (view: string) => void;
 }
 
-export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onShowSignUp }: LandingPageProps) {
-  const { user, signOut, appUser } = useAuth();
+export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onShowSignUp, onNavigate }: LandingPageProps) {
+  const { user, signOut, appUser, isAdmin } = useAuth();
   const [userName, setUserName] = useState<string>('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -117,17 +118,46 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
                         <UserCircle className="w-4 h-4" />
                         Profile
                       </button>
+
+                      <button
+                        onClick={() => {
+                          if (onNavigate) onNavigate('simulationLibrary');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                        Simulation Library
+                      </button>
+
+                      {isAdmin && isAdmin() && (
+                        <button
+                          onClick={() => {
+                            if (onNavigate) onNavigate('userManagement');
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
+                        >
+                          <Users className="w-4 h-4" />
+                          Manage Users
+                        </button>
+                      )}
+
+                      <div className="border-t border-border-subtle my-1"></div>
+
+                      <button
+                        onClick={() => {
+                          handleSignOut();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-status-error hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-status-error rounded-button hover:bg-red-700 transition-colors"
-                  title="Sign Out"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
               </>
             ) : (
               <>
