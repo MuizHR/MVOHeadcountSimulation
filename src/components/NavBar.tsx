@@ -65,7 +65,7 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
 
         <nav className="hidden md:flex items-center gap-2">
           <button
-            onClick={() => onNavigate('landing')}
+            onClick={() => onNavigate('wizard')}
             className={`
               rounded-button px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all
               ${isActiveView('landing') || isActiveView('wizard')
@@ -168,7 +168,7 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
 
         <nav className="md:hidden flex items-center gap-2 mr-14">
           <button
-            onClick={() => onNavigate('landing')}
+            onClick={() => onNavigate('wizard')}
             className={`
               rounded-full p-2 transition-all
               ${isActiveView('landing') || isActiveView('wizard')
