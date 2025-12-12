@@ -353,7 +353,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                                 </div>
                               </QuestionCard>
 
-                              <QuestionCard title="How complex is this work?" number={2}>
+                              <QuestionCard
+                                title="How complex is this work?"
+                                number={2}
+                                help="Consider the level of skill, experience, and decision-making required. Simple work is routine and follows clear procedures, while complex work requires judgment, problem-solving, or specialized knowledge."
+                              >
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <OptionDisplay selected={hrAnswers.complexity === 'very_simple'}>
                                     Very simple (repetitive / routine)
@@ -373,6 +377,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="In a normal month, roughly how many work items does your team complete?"
                                 number={3}
+                                help="Count each case / ticket / work order / document / person handled as 1 work item – whatever you normally track in your monthly reports (e.g. number of complaints closed, payrolls processed, work orders completed, invoices processed, tenancies managed). Don't count every email or small step."
                               >
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                   <OptionDisplay selected={hrAnswers.volume === 'under_200'}>
@@ -402,6 +407,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="On a normal working day, roughly how many tasks can ONE staff complete?"
                                 number={4}
+                                help="Think about what one person can realistically handle in a typical 8-hour workday. This helps us calculate how many staff are needed to handle the monthly volume."
                               >
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   <OptionDisplay selected={hrAnswers.productivityRate === 'under_5'}>
@@ -422,6 +428,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="When things go very well (no system issues, good internet, no leave), how does productivity change?"
                                 number={5}
+                                help="This helps us understand the best-case scenario. When everything runs smoothly, how much faster can work be completed compared to a normal day?"
                               >
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   <OptionDisplay selected={hrAnswers.productivityGoodCase === 'slightly'}>
@@ -442,6 +449,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="When things go badly (system down, short staff, urgent requests), how does it drop?"
                                 number={6}
+                                help="This helps us understand the worst-case scenario. When facing disruptions or challenges, how much does productivity decrease compared to a normal day?"
                               >
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   <OptionDisplay selected={hrAnswers.productivityBadCase === 'slightly'}>
@@ -468,6 +476,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="Out of 10 staff, how many are usually absent on a normal day?"
                                 number={7}
+                                help="Consider planned leave (annual leave, medical leave, training) and unplanned absences. This helps us factor in absenteeism when calculating staffing needs."
                               >
                                 <div className="grid grid-cols-4 gap-3">
                                   <OptionDisplay selected={hrAnswers.absenteeRate === '0'}>
@@ -488,6 +497,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="When a new staff joins, how long do they take to reach full performance?"
                                 number={8}
+                                help="Consider the learning curve for new hires - how long before they can work independently at full productivity? This includes training, familiarization with systems, and building necessary skills."
                               >
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   <OptionDisplay selected={hrAnswers.rampUpTime === 'under_1_month'}>
@@ -505,7 +515,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                                 </div>
                               </QuestionCard>
 
-                              <QuestionCard title="How stable is the team normally?" number={9}>
+                              <QuestionCard
+                                title="How stable is the team normally?"
+                                number={9}
+                                help="Consider your team's turnover rate. High turnover means frequent recruitment and training, which impacts capacity and adds risk to workforce planning."
+                              >
                                 <div className="grid grid-cols-3 gap-3">
                                   <OptionDisplay selected={hrAnswers.teamStability === 'very_stable'}>
                                     Very stable (rarely resign)
@@ -544,7 +558,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                                 )}
                               </div>
 
-                              <QuestionCard title="Do staff usually need overtime to cope?" number={11}>
+                              <QuestionCard
+                                title="Do staff usually need overtime to cope?"
+                                number={11}
+                                help="Regular overtime indicates that normal working hours aren't sufficient to handle the workload. This helps us understand current capacity constraints."
+                              >
                                 <div className="grid grid-cols-3 gap-3">
                                   <OptionDisplay selected={hrAnswers.overtimeFrequency === 'none'}>
                                     No overtime
@@ -564,7 +582,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Targets & Priorities</h3>
                               </div>
 
-                              <QuestionCard title="When must this work be completed by?" number={13}>
+                              <QuestionCard
+                                title="When must this work be completed by?"
+                                number={13}
+                                help="The timeline affects how we balance speed versus cost. Shorter deadlines may require more resources or higher-cost staffing options to ensure completion."
+                              >
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                   <OptionDisplay selected={hrAnswers.deadline === '1_week'}>
                                     1 week
@@ -587,6 +609,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                               <QuestionCard
                                 title="If the work is delayed, how serious is the impact?"
                                 number={14}
+                                help="High-impact work requires higher confidence in delivery and may need buffer capacity. Low-impact work offers more flexibility in resource allocation and risk tolerance."
                               >
                                 <div className="grid grid-cols-3 gap-3">
                                   <OptionDisplay selected={hrAnswers.impactLevel === 'low'}>
