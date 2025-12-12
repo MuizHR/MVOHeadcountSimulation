@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Sparkles, TrendingUp, Users, LogOut, LogIn, UserPlus } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Sparkles, TrendingUp, Users, LogOut, LogIn, UserPlus, ChevronDown, UserCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -11,12 +11,25 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onShowSignUp }: LandingPageProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, appUser } = useAuth();
   const [userName, setUserName] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadUserName();
   }, [user]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadUserName = async () => {
     if (!user) return;
@@ -37,6 +50,14 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
       console.error('Error loading user name:', error);
       setUserName(user.email || 'User');
     }
+  };
+
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   const handleSignOut = async () => {
@@ -64,16 +85,41 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <div className="text-text-main text-sm px-4 py-2 bg-primary-soft rounded-button border border-primary/20">
-                  {userName || user.email}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="rounded-full px-3 py-1.5 bg-gray-100 hover:bg-gray-200 flex items-center gap-2 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold">
+                      {getInitials(userName || user.email || 'User')}
+                    </div>
+                    <div className="hidden sm:block text-left">
+                      <div className="text-sm font-medium text-text-main">{userName || user.email}</div>
+                      {appUser?.role === 'super_admin' && (
+                        <div className="text-xs text-status-warning font-semibold">Super Admin</div>
+                      )}
+                      {appUser?.role === 'admin' && (
+                        <div className="text-xs text-status-error font-semibold">Admin</div>
+                      )}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-text-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-card-hover border border-border-subtle py-1">
+                      <button
+                        onClick={() => {
+                          if (onShowProfile) onShowProfile();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        Profile
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={onShowProfile}
-                  className="px-4 py-2 text-sm font-medium text-primary bg-white border border-primary/20 rounded-button hover:bg-primary-soft transition-colors"
-                  title="Profile"
-                >
-                  Profile
-                </button>
                 <button
                   onClick={handleSignOut}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-status-error rounded-button hover:bg-red-700 transition-colors"
