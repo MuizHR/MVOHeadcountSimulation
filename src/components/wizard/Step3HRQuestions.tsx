@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
+import { Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useWizard } from '../../contexts/WizardContext';
 import {
   HRQuestionAnswers,
@@ -185,8 +185,6 @@ export function Step3HRQuestions() {
     }
   );
 
-  const [showHelper, setShowHelper] = useState(false);
-
   useEffect(() => {
     loadStaffTypes();
   }, []);
@@ -215,11 +213,6 @@ export function Step3HRQuestions() {
       console.error('Error loading staff types:', error);
     }
   };
-  const [helperAnswers, setHelperAnswers] = useState({
-    currentTeamSize: 5,
-    workloadStatus: 'okay' as 'struggling' | 'okay' | 'spare_time',
-    workloadTrend: 'stable' as 'increasing' | 'stable' | 'decreasing',
-  });
 
   if (!currentSubFunction) {
     return null;
@@ -239,37 +232,6 @@ export function Step3HRQuestions() {
         complexity: benchmark.complexity,
       }));
     }
-  };
-
-  const applyHelperEstimates = () => {
-    const { currentTeamSize, workloadStatus, workloadTrend } = helperAnswers;
-
-    let estimatedVolume: VolumeRange = '500_1000';
-    if (currentTeamSize <= 2) estimatedVolume = 'under_200';
-    else if (currentTeamSize <= 5) estimatedVolume = '200_500';
-    else if (currentTeamSize <= 10) estimatedVolume = '500_1000';
-    else if (currentTeamSize <= 20) estimatedVolume = '1000_2500';
-    else estimatedVolume = 'over_2500';
-
-    let complexity: ComplexityLevel = 'normal';
-    if (workloadStatus === 'struggling') complexity = 'complex';
-    if (workloadStatus === 'spare_time') complexity = 'very_simple';
-
-    let priority: Priority = 'balanced';
-    if (workloadTrend === 'increasing' && workloadStatus === 'struggling') {
-      priority = 'fastest';
-    } else if (workloadTrend === 'decreasing') {
-      priority = 'lowest_cost';
-    }
-
-    setAnswers(prev => ({
-      ...prev,
-      volume: estimatedVolume,
-      complexity,
-      priority,
-    }));
-
-    setShowHelper(false);
   };
 
   const handleNext = () => {
@@ -313,109 +275,11 @@ export function Step3HRQuestions() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm text-teal-700 mb-1">
-              Sub-Function {currentSubFunctionIndex + 1} of {subFunctions.length}
-            </div>
-            <div className="text-2xl font-bold text-teal-900">{currentSubFunction.name}</div>
-          </div>
-          <button
-            onClick={() => setShowHelper(!showHelper)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 font-medium"
-          >
-            <HelpCircle className="w-5 h-5" />
-            Help Me Estimate
-          </button>
+        <div className="text-sm text-teal-700 mb-1">
+          Sub-Function {currentSubFunctionIndex + 1} of {subFunctions.length}
         </div>
+        <div className="text-2xl font-bold text-teal-900">{currentSubFunction.name}</div>
       </div>
-
-      {showHelper && (
-        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-bold text-blue-900 mb-4">Quick Estimation Helper</h3>
-          <p className="text-sm text-blue-800 mb-4">
-            Answer these 3 simple questions and we'll suggest default values for you
-          </p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">
-                1. How many people are doing this work now?
-              </label>
-              <input
-                type="number"
-                value={helperAnswers.currentTeamSize}
-                onChange={e =>
-                  setHelperAnswers(prev => ({
-                    ...prev,
-                    currentTeamSize: parseInt(e.target.value) || 0,
-                  }))
-                }
-                className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">
-                2. Are they struggling, okay, or have spare time?
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {(['struggling', 'okay', 'spare_time'] as const).map(status => (
-                  <button
-                    key={status}
-                    onClick={() =>
-                      setHelperAnswers(prev => ({ ...prev, workloadStatus: status }))
-                    }
-                    className={`
-                      p-3 rounded-lg border-2 font-medium capitalize
-                      ${
-                        helperAnswers.workloadStatus === status
-                          ? 'border-blue-600 bg-blue-100 text-blue-900'
-                          : 'border-blue-300 bg-white text-blue-700'
-                      }
-                    `}
-                  >
-                    {status.replace('_', ' ')}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">
-                3. Is workload increasing, stable, or decreasing?
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {(['increasing', 'stable', 'decreasing'] as const).map(trend => (
-                  <button
-                    key={trend}
-                    onClick={() =>
-                      setHelperAnswers(prev => ({ ...prev, workloadTrend: trend }))
-                    }
-                    className={`
-                      p-3 rounded-lg border-2 font-medium capitalize
-                      ${
-                        helperAnswers.workloadTrend === trend
-                          ? 'border-blue-600 bg-blue-100 text-blue-900'
-                          : 'border-blue-300 bg-white text-blue-700'
-                      }
-                    `}
-                  >
-                    {trend}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={applyHelperEstimates}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
-            >
-              Apply Suggested Values
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-6">
         <div className="text-center mb-6">
