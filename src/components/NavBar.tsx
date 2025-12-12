@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Users, Home, LayoutGrid, User, LogOut, ChevronDown } from 'lucide-react';
+import { Users, Home, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavBarProps {
@@ -122,7 +122,7 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-primary-soft flex items-center gap-2 transition-colors"
               >
-                <User className="w-4 h-4" />
+                <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
                 Profile
               </button>
 

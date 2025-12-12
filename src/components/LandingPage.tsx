@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, TrendingUp, Users, User, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Sparkles, TrendingUp, Users, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -72,7 +72,7 @@ export function LandingPage({ onStartSimulation, onShowProfile, onShowLogin, onS
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-white border border-primary/20 rounded-button hover:bg-primary-soft transition-colors"
                   title="Profile"
                 >
-                  <User className="w-4 h-4" />
+                  <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
                   Profile
                 </button>
                 <button

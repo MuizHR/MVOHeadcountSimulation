@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Briefcase, Mail, Calendar, Save, Shield, RefreshCw, Crown } from 'lucide-react';
+import { Building2, Briefcase, Mail, Calendar, Save, Shield, RefreshCw, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -155,8 +155,8 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-cyan-600 to-blue-700 px-8 py-12 text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4">
-              <User className="w-12 h-12 text-cyan-600" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4 p-3">
+              <img src="/jlg_logo_1.png" alt="JLG" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">
               {profile?.full_name || 'User'}
@@ -216,7 +216,7 @@ export function ProfilePage({ currentView, userName, onNavigate, onSignOut }: Pr
             <div className="space-y-6">
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <User className="w-4 h-4" />
+                  <img src="/jlg_logo_1.png" alt="" className="w-4 h-4 object-contain" />
                   Full Name
                 </label>
                 {isEditing ? (

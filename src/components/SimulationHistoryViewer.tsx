@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, Briefcase, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Calendar, Briefcase, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { KPICards } from './dashboard/KPICards';
 import { SystemRoleCompositionPanel } from './dashboard/SystemRoleCompositionPanel';
 import { SubFunctionAccordion } from './dashboard/SubFunctionAccordion';
