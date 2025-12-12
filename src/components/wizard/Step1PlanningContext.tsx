@@ -60,25 +60,37 @@ const PLANNING_TYPES: {
 const SCOPE_DRIVER_TYPES: {
   id: ScopeDriverType;
   label: string;
+  description: string;
   placeholder: string;
+  inputLabel: string;
+  examples: string;
   thresholds: { small: number; medium: number; large: number };
 }[] = [
   {
     id: 'employees_supported',
-    label: 'Employees Supported',
+    label: 'Employees Supported (Headcount served)',
+    description: 'Total number of employees your team supports or serves',
     placeholder: 'e.g., 2700',
+    inputLabel: 'How many employees are in scope?',
+    examples: 'e.g., 300 / 2,700',
     thresholds: { small: 500, medium: 2000, large: 5000 },
   },
   {
     id: 'sites_locations',
-    label: '# Sites / Locations',
-    placeholder: 'e.g., 15',
+    label: 'Work Locations Supported (Sites/outlets/buildings)',
+    description: 'Number of physical locations, sites, outlets, or buildings covered',
+    placeholder: 'e.g., 30',
+    inputLabel: 'How many locations are in scope?',
+    examples: 'e.g., 5 / 30 / 200',
     thresholds: { small: 5, medium: 15, large: 30 },
   },
   {
     id: 'projects_portfolios',
-    label: '# Projects / Portfolios',
-    placeholder: 'e.g., 8',
+    label: 'Active Workstreams (Projects/initiatives)',
+    description: 'Number of concurrent projects, programs, or initiatives managed',
+    placeholder: 'e.g., 10',
+    inputLabel: 'How many workstreams are in scope?',
+    examples: 'e.g., 3 / 10',
     thresholds: { small: 3, medium: 10, large: 20 },
   },
 ];
@@ -249,13 +261,28 @@ export function Step1PlanningContext() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Planning Scope Driver *
-            </label>
-            <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Scope Size (What are you supporting?)
+              </label>
+              <button
+                type="button"
+                onClick={() => updateSimulationInputs({ scopeDriverType: 'employees_supported' })}
+                className="text-xs text-teal-600 hover:text-teal-700 underline"
+              >
+                Not sure? Use Employees Supported (recommended)
+              </button>
+            </div>
+            <div className="flex items-start gap-2 mb-4">
+              <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-600">
+                Choose one number that best represents how big the operation/workload is. This helps the system suggest team size and defaults (you can override later).
+              </p>
+            </div>
+            <div className="space-y-3">
               {SCOPE_DRIVER_TYPES.map(driver => (
-                <div key={driver.id} className="flex items-center gap-4">
-                  <label className="flex items-center cursor-pointer">
+                <div key={driver.id} className="border border-gray-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="radio"
                       name="scopeDriverType"
@@ -266,34 +293,54 @@ export function Step1PlanningContext() {
                           scopeDriverType: e.target.value as ScopeDriverType,
                         })
                       }
-                      className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                      className="w-4 h-4 mt-0.5 text-teal-600 focus:ring-teal-500"
                     />
-                    <span className="ml-2 text-sm font-medium text-gray-700">
-                      {driver.label}
-                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 mb-1">
+                        {driver.label}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {driver.description}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {driver.examples}
+                      </div>
+                    </div>
                   </label>
                   {simulationInputs.scopeDriverType === driver.id && (
-                    <input
-                      type="number"
-                      value={simulationInputs.scopeDriverValue || ''}
-                      onChange={e =>
-                        updateSimulationInputs({
-                          scopeDriverValue: e.target.value ? Number(e.target.value) : undefined,
-                        })
-                      }
-                      placeholder={driver.placeholder}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      min="1"
-                    />
+                    <div className="mt-3 pl-7">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {driver.inputLabel}
+                      </label>
+                      <input
+                        type="number"
+                        value={simulationInputs.scopeDriverValue || ''}
+                        onChange={e =>
+                          updateSimulationInputs({
+                            scopeDriverValue: e.target.value ? Number(e.target.value) : undefined,
+                          })
+                        }
+                        placeholder={driver.placeholder}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        min="1"
+                      />
+                    </div>
                   )}
                 </div>
               ))}
             </div>
-            <div className="flex items-start gap-2 mt-2">
-              <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-500">
-                Select the primary metric that best represents your planning scope
-              </p>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-900">
+                <strong>What should I pick?</strong> Choose the metric that best defines your workload scope. For most HR/support functions, "Employees Supported" works best. For site-based operations (facilities, security), use "Work Locations". For project offices, use "Active Workstreams".
+              </div>
+            </div>
+            <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-gray-600">
+                  <strong>Used for:</strong> Auto-suggest operation size, default assumptions, reporting context
+                </div>
+              </div>
             </div>
           </div>
 
