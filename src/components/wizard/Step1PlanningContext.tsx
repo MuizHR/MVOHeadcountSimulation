@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Info, CheckCircle } from 'lucide-react';
 import { useWizard } from '../../contexts/WizardContext';
 import { PlanningType, OperationSize, ScopeDriverType } from '../../types/simulation';
 import { WizardNavigation } from './WizardNavigation';
 import { Tooltip } from '../Tooltip';
 import { planningTypeConfig, sizeOfOperationConfig, mapPlanningTypeToKey, mapSizeOfOperationToKey } from '../../types/planningConfig';
+import { scopeThresholdService, ScopeThreshold } from '../../services/scopeThresholdService';
 
 const ENTITIES = [
   'Group / Multi-entity',
@@ -123,38 +124,41 @@ const OPERATION_SIZES: {
   },
 ];
 
-function getSuggestedSize(driverType: ScopeDriverType | undefined, value: number | undefined): OperationSize | null {
+function getSuggestedSize(
+  thresholds: ScopeThreshold[],
+  driverType: ScopeDriverType | undefined,
+  value: number | undefined
+): OperationSize | null {
   if (!driverType || !value) return null;
 
-  const driver = SCOPE_DRIVER_TYPES.find(d => d.id === driverType);
-  if (!driver) return null;
+  const operationSize = scopeThresholdService.determineOperationSize(thresholds, driverType, value);
 
-  if (value <= driver.thresholds.small) return 'small_lean';
-  if (value <= driver.thresholds.medium) return 'medium_standard';
-  return 'large_extended';
+  return operationSize === 'small' ? 'small_lean' :
+         operationSize === 'medium' ? 'medium_standard' :
+         'large_extended';
 }
 
-function getThresholdText(driverType: ScopeDriverType | undefined, size: OperationSize): string {
-  if (!driverType) return '';
+function getRecommendationText(
+  thresholds: ScopeThreshold[],
+  driverType: ScopeDriverType | undefined,
+  value: number | undefined
+): string {
+  if (!driverType || !value) return '';
 
-  const driver = SCOPE_DRIVER_TYPES.find(d => d.id === driverType);
-  if (!driver) return '';
+  const size = getSuggestedSize(thresholds, driverType, value);
+  if (!size) return '';
 
-  switch (size) {
-    case 'small_lean':
-      return `Typically ≤ ${driver.thresholds.small} ${driver.label.toLowerCase()}`;
-    case 'medium_standard':
-      return `Typically ${driver.thresholds.small + 1}-${driver.thresholds.medium} ${driver.label.toLowerCase()}`;
-    case 'large_extended':
-      return `Typically > ${driver.thresholds.medium} ${driver.label.toLowerCase()}`;
-    default:
-      return '';
-  }
+  const sizeConfig = OPERATION_SIZES.find(s => s.id === size);
+  const driverName = scopeThresholdService.getDriverDisplayName(driverType);
+
+  return `Recommended size: ${sizeConfig?.title} ${sizeConfig?.subtitle} (based on ${driverName} = ${value})`;
 }
 
 export function Step1PlanningContext() {
   const { state, updateSimulationInputs, nextStep } = useWizard();
   const { simulationInputs } = state;
+  const [thresholds, setThresholds] = useState<ScopeThreshold[]>([]);
+  const [loadingThresholds, setLoadingThresholds] = useState(true);
 
   const selectedType = PLANNING_TYPES.find(
     t => t.id === simulationInputs.planningType
@@ -171,8 +175,18 @@ export function Step1PlanningContext() {
   const autoSizeEnabled = simulationInputs.autoSizeEnabled !== false;
 
   useEffect(() => {
-    if (autoSizeEnabled && simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue) {
-      const suggestedSize = getSuggestedSize(simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue);
+    async function loadThresholds() {
+      setLoadingThresholds(true);
+      const data = await scopeThresholdService.fetchThresholds();
+      setThresholds(data);
+      setLoadingThresholds(false);
+    }
+    loadThresholds();
+  }, []);
+
+  useEffect(() => {
+    if (autoSizeEnabled && simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue && thresholds.length > 0) {
+      const suggestedSize = getSuggestedSize(thresholds, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue);
       if (suggestedSize && suggestedSize !== simulationInputs.operationSize) {
         const sizeConfig = OPERATION_SIZES.find(s => s.id === suggestedSize);
         if (sizeConfig) {
@@ -184,7 +198,7 @@ export function Step1PlanningContext() {
         }
       }
     }
-  }, [autoSizeEnabled, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue]);
+  }, [autoSizeEnabled, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue, thresholds]);
 
   const canContinue = !!simulationInputs.simulationName && !!simulationInputs.planningType;
 
@@ -475,9 +489,12 @@ export function Step1PlanningContext() {
                       <div className="text-sm text-gray-600 italic mb-2">
                         {size.description}
                       </div>
-                      {selectedScopeDriver && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {getThresholdText(simulationInputs.scopeDriverType, size.id)}
+                      {getSuggestedSize(thresholds, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue) === size.id && autoSizeEnabled && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-700 text-xs rounded font-medium">
+                            <CheckCircle className="w-3 h-3" />
+                            Auto-suggested
+                          </span>
                         </div>
                       )}
                     </div>
@@ -492,6 +509,16 @@ export function Step1PlanningContext() {
                 </button>
               ))}
             </div>
+            {simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue && !loadingThresholds && (
+              <div className="mt-4 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-teal-900">
+                    <strong>Live Recommendation:</strong> {getRecommendationText(thresholds, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue)}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
