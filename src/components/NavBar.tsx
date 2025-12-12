@@ -47,18 +47,18 @@ export function NavBar({ currentView, userName, onNavigate, onSignOut }: NavBarP
           </div>
           <div className="hidden sm:block">
             <div className="text-text-main font-bold text-base md:text-lg leading-tight">
-              JLG MVO & Headcount Simulator
+              JLG
             </div>
             <div className="text-primary text-xs font-medium">
-              AI-enabled workforce planning
+              MVO & Headcount Simulator
             </div>
           </div>
           <div className="sm:hidden">
             <div className="text-text-main font-bold text-base leading-tight">
-              JLG MVO Simulator
+              JLG
             </div>
             <div className="text-primary text-xs font-medium">
-              AI workforce planning
+              MVO Simulator
             </div>
           </div>
         </button>
