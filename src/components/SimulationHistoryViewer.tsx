@@ -130,6 +130,14 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
   const subFunctions = simulation.subFunctions || [];
   const simulationResult = resultPayload.simulationResult || null;
 
+  // Create a map of subfunction names to their FTE values from results
+  const subfunctionFteMap = new Map<string, number>();
+  if (simulationResult && simulationResult.subFunctions) {
+    simulationResult.subFunctions.forEach((resultSf: any) => {
+      subfunctionFteMap.set(resultSf.name, resultSf.mvoHeadcount || resultSf.totalFte || 0);
+    });
+  }
+
   const tabs = [
     { id: 0, label: 'Context', sublabel: 'Planning scope and objectives' },
     { id: 1, label: 'Setup', sublabel: 'Functions and sub-functions' },
@@ -631,7 +639,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
                               {sf.staffConfiguration ? (
                                 <StaffConfigDisplay
-                                  totalFteRequired={sf.recommendedFTE?.recommended || sf.calculatedResults?.mvoHeadcount || 0}
+                                  totalFteRequired={subfunctionFteMap.get(sf.name) || sf.recommendedFTE?.recommended || sf.calculatedResults?.mvoHeadcount || 0}
                                   configuration={sf.staffConfiguration}
                                   title="Staff Type & Cost (Question 10)"
                                 />
