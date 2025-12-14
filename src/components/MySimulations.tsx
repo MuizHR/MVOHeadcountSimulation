@@ -149,8 +149,9 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate, hideHe
                 <option value="">All Types</option>
                 <option value="New Project">New Project</option>
                 <option value="New Function">New Function</option>
-                <option value="New BU">New BU</option>
+                <option value="New Business Unit">New Business Unit</option>
                 <option value="Restructuring">Restructuring</option>
+                <option value="BAU / Monthly Operations">BAU / Monthly Operations</option>
               </select>
             </div>
             <div>
@@ -161,10 +162,9 @@ export const MySimulations: React.FC<MySimulationsProps> = ({ onNavigate, hideHe
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Sizes</option>
-                <option value="Small">Small</option>
-                <option value="Medium">Medium</option>
-                <option value="Large">Large</option>
-                <option value="Custom">Custom</option>
+                <option value="Small / Lean (minimum team)">Small / Lean</option>
+                <option value="Medium / Standard (normal operations)">Medium / Standard</option>
+                <option value="Large / Extended (full scale / growth)">Large / Extended</option>
               </select>
             </div>
             <div>
