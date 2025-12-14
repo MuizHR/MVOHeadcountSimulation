@@ -247,8 +247,11 @@ export function Step6ResultsDashboard() {
     }
     return {
       simulationName: simulationResult.simulationName,
+      companyName: simulationInputs.companyName,
+      businessPillar: simulationInputs.businessPillar,
       entity: simulationInputs.entity,
       region: simulationInputs.region,
+      country: simulationInputs.country,
       planningType: planningTypeLabel,
       scopeDriverType: simulationInputs.scopeDriverType,
       scopeDriverValue: simulationInputs.scopeDriverValue,
@@ -381,28 +384,111 @@ export function Step6ResultsDashboard() {
     return `${label}: ${simulationInputs.scopeDriverValue}`;
   };
 
+  const getScopeDriverFullLabel = (type: string): string => {
+    switch (type) {
+      case 'employees_supported':
+        return 'Employees Supported';
+      case 'sites_locations':
+        return 'Work Locations Supported';
+      case 'projects_portfolios':
+        return 'Active Workstreams';
+      default:
+        return type;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             MVO Results: {simulationResult.simulationName}
           </h1>
-          <div className="space-y-1">
-            <p className="text-gray-600">
-              {simulationInputs.entity && <span>{simulationInputs.entity} • </span>}
-              {simulationInputs.region && <span>{simulationInputs.region} • </span>}
-              Planning Type: {planningTypeLabel}
-            </p>
-            <p className="text-gray-600">
-              {simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue && (
-                <span>{getScopeDriverLabel()} • </span>
-              )}
-              Size of Operation: {sizeOfOperationLabel}
-              {simulationInputs.autoSizeEnabled && simulationInputs.scopeDriverType && (
-                <span className="text-teal-600"> (Auto-suggested)</span>
-              )}
-            </p>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Info className="w-5 h-5 text-teal-600" />
+              Planning Context Summary
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase mb-1">Entity / Company</div>
+                    <div className="text-base font-medium text-gray-900">
+                      {simulationInputs.companyName || simulationInputs.entity || '-'}
+                      {simulationInputs.businessPillar && (
+                        <span className="text-gray-600 text-sm ml-2">({simulationInputs.businessPillar})</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase mb-1">Location / Region</div>
+                    <div className="text-base font-medium text-gray-900">
+                      {simulationInputs.region || '-'}
+                      {simulationInputs.country && simulationInputs.region !== 'Global / Multi-region' && (
+                        <span className="text-gray-600 text-sm ml-2">• {simulationInputs.country}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase mb-1">Planning Type</div>
+                    <div className="text-base font-medium text-gray-900">{planningTypeLabel}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase mb-1">Size of Operation</div>
+                    <div className="text-base font-medium text-gray-900">
+                      {sizeOfOperationLabel}
+                      {simulationInputs.autoSizeEnabled && simulationInputs.scopeDriverType && (
+                        <span className="text-teal-600 text-sm ml-2">(Auto-suggested)</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-medium text-gray-500 uppercase mb-2">Scope Size (What are you supporting?)</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Employees Supported</span>
+                    <span className="text-base font-bold text-gray-900">
+                      {simulationInputs.scopeDriverType === 'employees_supported' && simulationInputs.scopeDriverValue
+                        ? simulationInputs.scopeDriverValue.toLocaleString()
+                        : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Work Locations Supported</span>
+                    <span className="text-base font-bold text-gray-900">
+                      {simulationInputs.scopeDriverType === 'sites_locations' && simulationInputs.scopeDriverValue
+                        ? simulationInputs.scopeDriverValue.toLocaleString()
+                        : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Active Workstreams</span>
+                    <span className="text-base font-bold text-gray-900">
+                      {simulationInputs.scopeDriverType === 'projects_portfolios' && simulationInputs.scopeDriverValue
+                        ? simulationInputs.scopeDriverValue.toLocaleString()
+                        : '-'}
+                    </span>
+                  </div>
+                  {simulationInputs.scopeDriverType && simulationInputs.scopeDriverValue && (
+                    <div className="pt-2 border-t border-gray-300">
+                      <div className="text-xs text-gray-600 mb-1">Primary Scope Driver</div>
+                      <div className="text-sm font-semibold text-teal-700">
+                        {getScopeDriverFullLabel(simulationInputs.scopeDriverType)}: {simulationInputs.scopeDriverValue.toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

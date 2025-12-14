@@ -100,16 +100,6 @@ export async function exportToWord(data: ExportData): Promise<void> {
       spacing: { after: 100 }
     }));
 
-    if (data.scopeDriverType && data.scopeDriverValue) {
-      contextSection.push(new Paragraph({
-        children: [
-          new TextRun({ text: 'Scope Driver: ', bold: true }),
-          new TextRun(getScopeDriverLabel())
-        ],
-        spacing: { after: 100 }
-      }));
-    }
-
     contextSection.push(new Paragraph({
       children: [
         new TextRun({ text: 'Operation Size: ', bold: true }),
@@ -117,6 +107,46 @@ export async function exportToWord(data: ExportData): Promise<void> {
       ],
       spacing: { after: 100 }
     }));
+
+    contextSection.push(new Paragraph({
+      text: 'Scope Size (What are you supporting?)',
+      bold: true,
+      spacing: { before: 200, after: 100 }
+    }));
+
+    contextSection.push(new Paragraph({
+      children: [
+        new TextRun({ text: '  • Employees Supported: ', bold: false }),
+        new TextRun(data.scopeDriverType === 'employees_supported' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-')
+      ],
+      spacing: { after: 50 }
+    }));
+
+    contextSection.push(new Paragraph({
+      children: [
+        new TextRun({ text: '  • Work Locations Supported: ', bold: false }),
+        new TextRun(data.scopeDriverType === 'sites_locations' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-')
+      ],
+      spacing: { after: 50 }
+    }));
+
+    contextSection.push(new Paragraph({
+      children: [
+        new TextRun({ text: '  • Active Workstreams: ', bold: false }),
+        new TextRun(data.scopeDriverType === 'projects_portfolios' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-')
+      ],
+      spacing: { after: 100 }
+    }));
+
+    if (data.scopeDriverType && data.scopeDriverValue) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Primary Scope Driver: ', bold: true }),
+          new TextRun(getScopeDriverLabel())
+        ],
+        spacing: { after: 100 }
+      }));
+    }
 
     if (data.contextObjectives) {
       contextSection.push(new Paragraph({
@@ -261,13 +291,37 @@ export function exportToPDF(data: ExportData): void {
     doc.text(`Planning Type: ${data.planningType}`, 20, yPos);
     yPos += 10;
 
+    doc.text(`Operation Size: ${data.sizeOfOperation}${data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : ''}`, 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Scope Size (What are you supporting?)', 20, yPos);
+    yPos += 8;
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+
+    const employeesValue = data.scopeDriverType === 'employees_supported' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-';
+    doc.text(`  • Employees Supported: ${employeesValue}`, 20, yPos);
+    yPos += 6;
+
+    const locationsValue = data.scopeDriverType === 'sites_locations' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-';
+    doc.text(`  • Work Locations Supported: ${locationsValue}`, 20, yPos);
+    yPos += 6;
+
+    const workstreamsValue = data.scopeDriverType === 'projects_portfolios' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-';
+    doc.text(`  • Active Workstreams: ${workstreamsValue}`, 20, yPos);
+    yPos += 8;
+
     if (data.scopeDriverType && data.scopeDriverValue) {
-      doc.text(`Scope Driver: ${getScopeDriverLabel()}`, 20, yPos);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Primary Scope Driver: ${getScopeDriverLabel()}`, 20, yPos);
+      doc.setFont(undefined, 'normal');
       yPos += 10;
     }
 
-    doc.text(`Operation Size: ${data.sizeOfOperation}${data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : ''}`, 20, yPos);
-    yPos += 10;
+    doc.setFontSize(12);
 
     if (data.contextObjectives) {
       doc.setFontSize(11);
@@ -341,13 +395,29 @@ export function exportToExcel(data: ExportData): void {
 
     detailsData.push(['Planning Type', data.planningType]);
 
-    if (data.scopeDriverType && data.scopeDriverValue) {
-      detailsData.push(['Scope Driver', getScopeDriverLabel()]);
-    }
-
     detailsData.push(['Operation Size', data.sizeOfOperation + (data.autoSizeEnabled && data.scopeDriverType ? ' (Auto-suggested)' : '')]);
 
+    detailsData.push([]);
+    detailsData.push(['Scope Size (What are you supporting?)']);
+    detailsData.push([
+      'Employees Supported',
+      data.scopeDriverType === 'employees_supported' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-'
+    ]);
+    detailsData.push([
+      'Work Locations Supported',
+      data.scopeDriverType === 'sites_locations' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-'
+    ]);
+    detailsData.push([
+      'Active Workstreams',
+      data.scopeDriverType === 'projects_portfolios' && data.scopeDriverValue ? data.scopeDriverValue.toLocaleString() : '-'
+    ]);
+
+    if (data.scopeDriverType && data.scopeDriverValue) {
+      detailsData.push(['Primary Scope Driver', getScopeDriverLabel()]);
+    }
+
     if (data.contextObjectives) {
+      detailsData.push([]);
       detailsData.push(['Context & Objectives', data.contextObjectives]);
     }
 

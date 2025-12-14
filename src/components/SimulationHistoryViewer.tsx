@@ -928,12 +928,98 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
             {activeTab === 5 && simulationResult && (
               <div className="max-w-7xl mx-auto">
                 <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4">
                     MVO Results: {simulation.simulationName}
                   </h1>
-                  <p className="text-gray-600">
-                    Planning Type: {simulation.planningTypeLabel} • Size of Operation: {simulation.sizeOfOperationLabel}
-                  </p>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Info className="w-5 h-5 text-teal-600" />
+                      Planning Context Summary
+                    </h2>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase mb-1">Entity / Company</div>
+                            <div className="text-base font-medium text-gray-900">
+                              {simulation.companyName || simulation.entity || '-'}
+                              {simulation.businessPillar && (
+                                <span className="text-gray-600 text-sm ml-2">({simulation.businessPillar})</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase mb-1">Location / Region</div>
+                            <div className="text-base font-medium text-gray-900">
+                              {simulation.region || '-'}
+                              {simulation.country && simulation.region !== 'Global / Multi-region' && (
+                                <span className="text-gray-600 text-sm ml-2">• {simulation.country}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase mb-1">Planning Type</div>
+                            <div className="text-base font-medium text-gray-900">{simulation.planningTypeLabel}</div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase mb-1">Size of Operation</div>
+                            <div className="text-base font-medium text-gray-900">
+                              {simulation.sizeOfOperationLabel}
+                              {simulation.autoSizeEnabled && simulation.scopeDriverType && (
+                                <span className="text-teal-600 text-sm ml-2">(Auto-suggested)</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-medium text-gray-500 uppercase mb-2">Scope Size (What are you supporting?)</div>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">Employees Supported</span>
+                            <span className="text-base font-bold text-gray-900">
+                              {simulation.scopeDriverType === 'employees_supported' && simulation.scopeDriverValue
+                                ? simulation.scopeDriverValue.toLocaleString()
+                                : '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">Work Locations Supported</span>
+                            <span className="text-base font-bold text-gray-900">
+                              {simulation.scopeDriverType === 'sites_locations' && simulation.scopeDriverValue
+                                ? simulation.scopeDriverValue.toLocaleString()
+                                : '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">Active Workstreams</span>
+                            <span className="text-base font-bold text-gray-900">
+                              {simulation.scopeDriverType === 'projects_portfolios' && simulation.scopeDriverValue
+                                ? simulation.scopeDriverValue.toLocaleString()
+                                : '-'}
+                            </span>
+                          </div>
+                          {simulation.scopeDriverType && simulation.scopeDriverValue && (
+                            <div className="pt-2 border-t border-gray-300">
+                              <div className="text-xs text-gray-600 mb-1">Primary Scope Driver</div>
+                              <div className="text-sm font-semibold text-teal-700">
+                                {simulation.scopeDriverType === 'employees_supported' ? 'Employees Supported' :
+                                 simulation.scopeDriverType === 'sites_locations' ? 'Work Locations Supported' :
+                                 simulation.scopeDriverType === 'projects_portfolios' ? 'Active Workstreams' :
+                                 simulation.scopeDriverType}: {simulation.scopeDriverValue.toLocaleString()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-2 border-teal-300 rounded-xl px-6 py-4 mb-6">

@@ -4,11 +4,20 @@ import { SynchronizedResults } from '../types/monteCarlo';
 
 export interface ReportData {
   projectName: string;
+  companyName?: string;
+  businessPillar?: string;
+  entity?: string;
+  region?: string;
+  country?: string;
   planningType: string;
+  scopeDriverType?: string;
+  scopeDriverValue?: number;
   createdBy: string;
   createdAt: string;
   recipientEmail: string;
   sizeOfOperation: string;
+  operationSize: string;
+  autoSizeEnabled?: boolean;
   riskLevel: string;
   planningHorizon: string;
   mainFunction: string;
@@ -154,15 +163,24 @@ export function serializeReportData(
 
   return {
     projectName: simulationInputs.simulationName,
+    companyName: simulationInputs.companyName,
+    businessPillar: simulationInputs.businessPillar,
+    entity: simulationInputs.entity,
+    region: simulationInputs.region,
+    country: simulationInputs.country,
     planningType: simulationInputs.planningType,
+    scopeDriverType: simulationInputs.scopeDriverType,
+    scopeDriverValue: simulationInputs.scopeDriverValue,
     createdBy: userEmail,
     createdAt: new Date().toISOString(),
     recipientEmail: userEmail,
-    sizeOfOperation: simulationInputs.sizeOfOperation,
-    riskLevel: simulationInputs.riskTolerance || 'medium',
-    planningHorizon: simulationInputs.planningHorizon,
-    mainFunction: simulationInputs.mainFunction,
-    currency: simulationInputs.currency,
+    sizeOfOperation: simulationInputs.operationSize || 'medium_standard',
+    operationSize: simulationInputs.operationSize || 'medium_standard',
+    autoSizeEnabled: simulationInputs.autoSizeEnabled,
+    riskLevel: 'medium',
+    planningHorizon: `${simulationInputs.projectLength || 12} months`,
+    mainFunction: simulationInputs.functionType,
+    currency: 'MYR',
 
     headcount: {
       baseline: totalBaseline,

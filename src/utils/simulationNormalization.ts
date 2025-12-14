@@ -24,6 +24,7 @@ export interface NormalizedSimulationData {
   simulationName: string;
   companyName: string;
   businessPillar: string;
+  entity: string;
   country: string;
   region: string;
   countryCode: string;
@@ -37,6 +38,7 @@ export interface NormalizedSimulationData {
   planningTypeLabel: string;
   sizeOfOperation: string;
   sizeOfOperationLabel: string;
+  autoSizeEnabled: boolean;
   contextObjectives: string;
 
   // Step 2: Function Setup
@@ -79,10 +81,12 @@ export function normalizeSimulationData(rawSimulation: any): NormalizedSimulatio
 
   // Step 1: Planning Context normalization
   const companyName = simulationInputs.companyName || simulationInputs.entity || '-';
+  const entity = simulationInputs.entity || '-';
   const businessPillar = simulationInputs.businessPillar || '-';
   const country = simulationInputs.country || '-';
   const region = simulationInputs.region || '-';
   const countryCode = simulationInputs.countryCode || '';
+  const autoSizeEnabled = simulationInputs.autoSizeEnabled ?? false;
 
   // Scope driver normalization
   const scopeDriverType = simulationInputs.scopeDriverType || null;
@@ -145,6 +149,7 @@ export function normalizeSimulationData(rawSimulation: any): NormalizedSimulatio
     simulationName: rawSimulation.simulation_name || 'Untitled Simulation',
     companyName,
     businessPillar,
+    entity,
     country,
     region,
     countryCode,
@@ -158,6 +163,7 @@ export function normalizeSimulationData(rawSimulation: any): NormalizedSimulatio
     planningTypeLabel,
     sizeOfOperation: sizeOfOperationKey,
     sizeOfOperationLabel,
+    autoSizeEnabled,
     contextObjectives,
 
     // Step 2: Function Setup
