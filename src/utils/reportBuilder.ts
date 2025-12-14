@@ -9,6 +9,7 @@ export interface ReportPayload extends ExportData {
   businessPillar: string;
   entity: string;
   region: string;
+  country: string;
   scopeDriver: string;
   contextObjectives: string;
 }
@@ -66,6 +67,7 @@ export function buildReportPayload(
     businessPillar: simulation.context.businessPillar || 'Custom',
     entity: simulation.context.entity || 'Not specified',
     region: simulation.context.region || 'Not specified',
+    country: simulation.context.country || 'Not specified',
     planningType: formatPlanningType(simulation.context.planningType),
     scopeDriverType: simulation.context.scopeDriverType || undefined,
     scopeDriverValue: simulation.context.scopeDriverValue || undefined,
@@ -104,6 +106,10 @@ export function getSimulationMetadataSummary(simulation: CanonicalSimulation): s
     lines.push(`Entity: ${simulation.context.entity}`);
   }
 
+  if (simulation.context.country) {
+    lines.push(`Country: ${simulation.context.country}`);
+  }
+
   if (simulation.context.region) {
     lines.push(`Region: ${simulation.context.region}`);
   }
@@ -127,6 +133,7 @@ export function getSimulationContextForExport(simulation: CanonicalSimulation): 
     'Business Pillar': simulation.context.businessPillar || 'Custom',
     'Planning Type': formatPlanningType(simulation.context.planningType),
     'Operation Size': formatOperationSize(simulation.context.operationSize),
+    'Country': simulation.context.country || 'Not specified',
     'Region': simulation.context.region || 'Not specified',
     'Scope': formatScopeDriver(simulation),
     'Auto-Size Enabled': simulation.context.autoSizeEnabled ? 'Yes' : 'No',

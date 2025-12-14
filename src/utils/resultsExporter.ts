@@ -9,6 +9,7 @@ export interface ExportData {
   businessPillar?: string;
   entity?: string;
   region?: string;
+  country?: string;
   planningType: string;
   scopeDriverType?: string;
   scopeDriverValue?: number;
@@ -71,10 +72,20 @@ export async function exportToWord(data: ExportData): Promise<void> {
       }));
     }
 
+    if (data.country) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Country: ', bold: true }),
+          new TextRun(data.country)
+        ],
+        spacing: { after: 100 }
+      }));
+    }
+
     if (data.region) {
       contextSection.push(new Paragraph({
         children: [
-          new TextRun({ text: 'Location / Region: ', bold: true }),
+          new TextRun({ text: 'Region: ', bold: true }),
           new TextRun(data.region)
         ],
         spacing: { after: 100 }
@@ -237,8 +248,13 @@ export function exportToPDF(data: ExportData): void {
       yPos += 10;
     }
 
+    if (data.country) {
+      doc.text(`Country: ${data.country}`, 20, yPos);
+      yPos += 10;
+    }
+
     if (data.region) {
-      doc.text(`Location / Region: ${data.region}`, 20, yPos);
+      doc.text(`Region: ${data.region}`, 20, yPos);
       yPos += 10;
     }
 
@@ -315,8 +331,12 @@ export function exportToExcel(data: ExportData): void {
       detailsData.push(['Business Pillar', data.businessPillar]);
     }
 
+    if (data.country) {
+      detailsData.push(['Country', data.country]);
+    }
+
     if (data.region) {
-      detailsData.push(['Location / Region', data.region]);
+      detailsData.push(['Region', data.region]);
     }
 
     detailsData.push(['Planning Type', data.planningType]);

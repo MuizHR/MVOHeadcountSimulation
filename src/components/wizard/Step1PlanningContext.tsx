@@ -6,6 +6,7 @@ import { PlanningType, OperationSize, ScopeDriverType } from '../../types/simula
 import { WizardNavigation } from './WizardNavigation';
 import { Tooltip } from '../Tooltip';
 import { CompanySelector } from '../CompanySelector';
+import { CountrySelector } from '../CountrySelector';
 import { planningTypeConfig, sizeOfOperationConfig, mapPlanningTypeToKey, mapSizeOfOperationToKey } from '../../types/planningConfig';
 import { scopeThresholdService, ScopeThreshold } from '../../services/scopeThresholdService';
 
@@ -163,6 +164,7 @@ export function Step1PlanningContext() {
   const [thresholds, setThresholds] = useState<ScopeThreshold[]>([]);
   const [loadingThresholds, setLoadingThresholds] = useState(true);
   const [companyError, setCompanyError] = useState('');
+  const [countryError, setCountryError] = useState('');
 
   const selectedType = PLANNING_TYPES.find(
     t => t.id === simulationInputs.planningType
@@ -204,17 +206,36 @@ export function Step1PlanningContext() {
     }
   }, [autoSizeEnabled, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue, thresholds]);
 
+  const isRegionValid = !!simulationInputs.region && (
+    simulationInputs.region === 'Global / Multi-region' ||
+    !!simulationInputs.country
+  );
+
   const canContinue =
     !!simulationInputs.simulationName &&
     !!simulationInputs.planningType &&
-    !!simulationInputs.companyName;
+    !!simulationInputs.companyName &&
+    isRegionValid;
 
   const handleNext = () => {
+    let hasErrors = false;
+
     if (!simulationInputs.companyName) {
       setCompanyError('Please select a company/entity');
-      return;
+      hasErrors = true;
+    } else {
+      setCompanyError('');
     }
-    setCompanyError('');
+
+    if (!isRegionValid) {
+      setCountryError('Please select a country/location or Global/Multi-region');
+      hasErrors = true;
+    } else {
+      setCountryError('');
+    }
+
+    if (hasErrors) return;
+
     nextStep();
   };
 
@@ -270,20 +291,17 @@ export function Step1PlanningContext() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Location / Region *
               </label>
-              <select
-                value={simulationInputs.region || ''}
-                onChange={e =>
-                  updateSimulationInputs({ region: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              >
-                <option value="">Select region...</option>
-                {REGIONS.map(region => (
-                  <option key={region} value={region}>
-                    {region}
-                  </option>
-                ))}
-              </select>
+              <CountrySelector
+                country={simulationInputs.country || null}
+                region={simulationInputs.region || 'Custom'}
+                onChange={(country, region, countryCode) => {
+                  updateSimulationInputs({ country, region, countryCode });
+                  setCountryError('');
+                }}
+                userId={appUser?.id}
+                required={true}
+                error={countryError}
+              />
             </div>
           </div>
 

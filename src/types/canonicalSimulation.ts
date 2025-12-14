@@ -21,7 +21,9 @@ export interface SimulationContext {
   companyName: string;
   businessPillar: string;
   entity?: string | null;
-  region?: string | null;
+  region: string;
+  country: string | null;
+  countryCode?: string | null;
   planningType: PlanningType;
   planningTypeKey?: PlanningTypeKey;
   scopeDriverType?: ScopeDriverType | null;
@@ -101,6 +103,8 @@ export const SCHEMA_CHANGELOG: SchemaChangelogEntry[] = [
       'Added autoSizeEnabled field to context',
       'Added scopeDriverType and scopeDriverValue to context',
       'Added companyName and businessPillar fields (replaces/enhances entity)',
+      'Added country and countryCode fields (enhances region with specific location)',
+      'Region field now required; country is optional/null for Global/Multi-region',
     ],
   },
 ];

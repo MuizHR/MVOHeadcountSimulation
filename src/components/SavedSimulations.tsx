@@ -105,6 +105,14 @@ export function SavedSimulations({ onLoad }: SavedSimulationsProps) {
                   )}
                 </p>
               )}
+              {(sim.context.country || sim.context.region) && (
+                <p className="text-xs text-gray-500 truncate mt-1">
+                  {sim.context.country || sim.context.region}
+                  {sim.context.country && sim.context.region && sim.context.region !== 'Custom' && (
+                    <span className="text-gray-400"> • {sim.context.region}</span>
+                  )}
+                </p>
+              )}
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                 <Clock className="w-3 h-3" />
                 <span>{formatDate(sim.createdAt!)}</span>

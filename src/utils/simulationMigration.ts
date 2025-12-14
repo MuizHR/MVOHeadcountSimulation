@@ -10,6 +10,7 @@ import type {
   CURRENT_ENGINE_VERSION,
 } from '../types/canonicalSimulation';
 import { inferPillarFromCompanyName } from '../config/companies';
+import { inferRegionFromCountry, getCountryByName } from '../config/countries';
 
 export function migrateSimulation(rawSimulation: any): CanonicalSimulation {
   if (!rawSimulation) {
@@ -33,12 +34,31 @@ function migrateFromLegacy(raw: any): CanonicalSimulation {
   const companyName = inputs.companyName || inputs.company_name || inputs.entity || '';
   const businessPillar = inputs.businessPillar || inputs.business_pillar || inferPillarFromCompanyName(companyName);
 
+  const country = inputs.country || null;
+  const countryCode = inputs.countryCode || inputs.country_code || null;
+  let region = inputs.region || '';
+
+  if (country && !region) {
+    region = inferRegionFromCountry(country);
+  } else if (!country && !region) {
+    region = 'Custom';
+  }
+
+  if (countryCode && !country) {
+    const countryData = getCountryByName(country || '');
+    if (countryData) {
+      region = countryData.region;
+    }
+  }
+
   const context: SimulationContext = {
     simulationName: inputs.simulationName || inputs.simulation_name || 'Untitled Simulation',
     companyName: companyName,
     businessPillar: businessPillar,
     entity: inputs.entity || null,
-    region: inputs.region || null,
+    region: region,
+    country: country,
+    countryCode: countryCode,
     planningType: inputs.planningType || inputs.planning_type || 'new_function',
     planningTypeKey: inputs.planningTypeKey || inputs.planning_type_key || undefined,
     scopeDriverType: inputs.scopeDriverType || inputs.scope_driver_type || null,
@@ -117,6 +137,9 @@ function migrateFromLegacy(raw: any): CanonicalSimulation {
     'business_pillar',
     'entity',
     'region',
+    'country',
+    'countryCode',
+    'country_code',
     'planningType',
     'planning_type',
     'planningTypeKey',
@@ -208,7 +231,9 @@ export function canonicalToLegacy(canonical: CanonicalSimulation): SimulationInp
     companyName: canonical.context.companyName,
     businessPillar: canonical.context.businessPillar,
     entity: canonical.context.entity || undefined,
-    region: canonical.context.region || undefined,
+    region: canonical.context.region,
+    country: canonical.context.country || undefined,
+    countryCode: canonical.context.countryCode || undefined,
     planningType: canonical.context.planningType,
     planningTypeKey: canonical.context.planningTypeKey,
     scopeDriverType: canonical.context.scopeDriverType || undefined,

@@ -53,6 +53,8 @@ export interface SimulationInputs {
   businessPillar?: string;
   entity?: string;
   region?: string;
+  country?: string;
+  countryCode?: string;
   planningType: PlanningType;
   scopeDriverType?: ScopeDriverType;
   scopeDriverValue?: number;
