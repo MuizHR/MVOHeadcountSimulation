@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { SimulationHistory } from '../types/simulationHistory';
+import { normalizeSimulationData, getLocationDisplay, getCompanyDisplay, formatNumber } from './simulationNormalization';
 
 export async function exportSimulationToWord(simulation: SimulationHistory): Promise<void> {
   const content = generateSimulationReport(simulation);
@@ -30,6 +31,7 @@ export async function exportSimulationToExcel(simulation: SimulationHistory): Pr
 }
 
 export async function exportSimulationToPDF(simulation: SimulationHistory): Promise<void> {
+  const normalized = normalizeSimulationData(simulation);
   const doc = new jsPDF();
   const results = simulation.result_payload;
   const inputs = simulation.input_payload;
@@ -52,12 +54,12 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
   yPos += lineHeight * 2;
 
   doc.setFontSize(14);
-  doc.text(simulation.simulation_name, 105, yPos, { align: 'center' });
+  doc.text(normalized.simulationName, 105, yPos, { align: 'center' });
   yPos += lineHeight * 1.5;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Created: ${new Date(simulation.created_at).toLocaleDateString()}`, 105, yPos, { align: 'center' });
+  doc.text(`Created: ${new Date(normalized.created_at).toLocaleDateString()}`, 105, yPos, { align: 'center' });
   yPos += lineHeight * 2;
 
   checkPageBreak();
@@ -69,18 +71,29 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
 
-  if (simulation.business_area) {
-    doc.text(`Business Area: ${simulation.business_area}`, 20, yPos);
+  doc.text(`Company: ${normalized.companyName}`, 20, yPos);
+  yPos += lineHeight;
+
+  doc.text(`Location: ${getLocationDisplay(normalized.country, normalized.region)}`, 20, yPos);
+  yPos += lineHeight;
+
+  if (normalized.businessArea) {
+    doc.text(`Business Area: ${normalized.businessArea}`, 20, yPos);
     yPos += lineHeight;
   }
 
-  if (simulation.planning_type) {
-    doc.text(`Planning Type: ${simulation.planning_type}`, 20, yPos);
+  if (normalized.planningTypeLabel) {
+    doc.text(`Planning Type: ${normalized.planningTypeLabel}`, 20, yPos);
     yPos += lineHeight;
   }
 
-  if (simulation.size_of_operation) {
-    doc.text(`Size of Operation: ${simulation.size_of_operation}`, 20, yPos);
+  if (normalized.sizeOfOperationLabel) {
+    doc.text(`Size of Operation: ${normalized.sizeOfOperationLabel}`, 20, yPos);
+    yPos += lineHeight;
+  }
+
+  if (normalized.scopeDriverLabel && normalized.scopeDriverValue) {
+    doc.text(`Scope: ${normalized.scopeDriverLabel} = ${formatNumber(normalized.scopeDriverValue)}`, 20, yPos);
     yPos += lineHeight;
   }
 
@@ -147,22 +160,29 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
 }
 
 function generateSimulationReport(simulation: SimulationHistory): string {
+  const normalized = normalizeSimulationData(simulation);
   const results = simulation.result_payload;
   const inputs = simulation.input_payload;
 
   let content = `MVO SIMULATION REPORT\n\n`;
-  content += `Simulation Name: ${simulation.simulation_name}\n`;
-  content += `Created: ${new Date(simulation.created_at).toLocaleDateString()}\n\n`;
+  content += `Simulation Name: ${normalized.simulationName}\n`;
+  content += `Created: ${new Date(normalized.created_at).toLocaleDateString()}\n\n`;
 
   content += `CONTEXT\n`;
-  content += `Business Area: ${simulation.business_area || 'N/A'}\n`;
-  content += `Planning Type: ${simulation.planning_type || 'N/A'}\n`;
-  content += `Size of Operation: ${simulation.size_of_operation || 'N/A'}\n\n`;
+  content += `Company: ${normalized.companyName}\n`;
+  content += `Location: ${getLocationDisplay(normalized.country, normalized.region)}\n`;
+  content += `Business Area: ${normalized.businessArea || 'N/A'}\n`;
+  content += `Planning Type: ${normalized.planningTypeLabel || 'N/A'}\n`;
+  content += `Size of Operation: ${normalized.sizeOfOperationLabel || 'N/A'}\n`;
+  if (normalized.scopeDriverLabel && normalized.scopeDriverValue) {
+    content += `Scope: ${normalized.scopeDriverLabel} = ${formatNumber(normalized.scopeDriverValue)}\n`;
+  }
+  content += `\n`;
 
   content += `SUMMARY RESULTS\n`;
-  content += `Total FTE: ${simulation.total_fte || 'N/A'}\n`;
-  content += `Monthly Cost: MYR ${(simulation.total_monthly_cost || 0).toLocaleString()}\n`;
-  content += `Workload Score: ${simulation.workload_score || 'N/A'}\n\n`;
+  content += `Total FTE: ${normalized.totalFte || 'N/A'}\n`;
+  content += `Monthly Cost: MYR ${(normalized.totalMonthlyCost || 0).toLocaleString()}\n`;
+  content += `Workload Score: ${normalized.workloadScore || 'N/A'}\n\n`;
 
   if (results && results.subFunctions && Array.isArray(results.subFunctions)) {
     content += `SUB-FUNCTION BREAKDOWN\n\n`;
@@ -184,21 +204,28 @@ function generateSimulationReport(simulation: SimulationHistory): string {
 }
 
 function generateCSVReport(simulation: SimulationHistory): string {
+  const normalized = normalizeSimulationData(simulation);
   const results = simulation.result_payload;
 
   let csv = 'MVO Simulation Report\n\n';
-  csv += `Simulation Name,${simulation.simulation_name}\n`;
-  csv += `Created,${new Date(simulation.created_at).toLocaleDateString()}\n\n`;
+  csv += `Simulation Name,${normalized.simulationName}\n`;
+  csv += `Created,${new Date(normalized.created_at).toLocaleDateString()}\n\n`;
 
   csv += 'Context\n';
-  csv += `Business Area,${simulation.business_area || 'N/A'}\n`;
-  csv += `Planning Type,${simulation.planning_type || 'N/A'}\n`;
-  csv += `Size of Operation,${simulation.size_of_operation || 'N/A'}\n\n`;
+  csv += `Company,${normalized.companyName}\n`;
+  csv += `Location,${getLocationDisplay(normalized.country, normalized.region)}\n`;
+  csv += `Business Area,${normalized.businessArea || 'N/A'}\n`;
+  csv += `Planning Type,${normalized.planningTypeLabel || 'N/A'}\n`;
+  csv += `Size of Operation,${normalized.sizeOfOperationLabel || 'N/A'}\n`;
+  if (normalized.scopeDriverLabel && normalized.scopeDriverValue) {
+    csv += `Scope,${normalized.scopeDriverLabel} = ${formatNumber(normalized.scopeDriverValue)}\n`;
+  }
+  csv += `\n`;
 
   csv += 'Summary\n';
-  csv += `Total FTE,${simulation.total_fte || 'N/A'}\n`;
-  csv += `Monthly Cost,${simulation.total_monthly_cost || 0}\n`;
-  csv += `Workload Score,${simulation.workload_score || 'N/A'}\n\n`;
+  csv += `Total FTE,${normalized.totalFte || 'N/A'}\n`;
+  csv += `Monthly Cost,${normalized.totalMonthlyCost || 0}\n`;
+  csv += `Workload Score,${normalized.workloadScore || 'N/A'}\n\n`;
 
   if (results && results.subFunctions && Array.isArray(results.subFunctions)) {
     csv += 'Sub-Function Breakdown\n';

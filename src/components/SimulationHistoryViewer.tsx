@@ -6,6 +6,7 @@ import { SubFunctionAccordion } from './dashboard/SubFunctionAccordion';
 import { HeadcountComparisonTable } from './dashboard/HeadcountComparisonTable';
 import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
 import { simulationHistoryService } from '../services/simulationHistoryService';
+import { normalizeSimulationData, formatSimulationDate, formatNumber, getLocationDisplay, getCompanyDisplay, NormalizedSimulationData } from '../utils/simulationNormalization';
 
 interface SimulationHistoryViewerProps {
   simulationId: string;
@@ -75,7 +76,8 @@ function OptionDisplay({ selected, children }: OptionDisplayProps) {
 export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHistoryViewerProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [expandedSubFunctions, setExpandedSubFunctions] = useState<Record<number, boolean>>({});
-  const [simulation, setSimulation] = useState<any>(null);
+  const [simulation, setSimulation] = useState<NormalizedSimulationData | null>(null);
+  const [rawSimulation, setRawSimulation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -85,7 +87,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
   const loadSimulation = async () => {
     try {
       const data = await simulationHistoryService.getSimulationById(simulationId);
-      setSimulation(data);
+      if (data) {
+        setRawSimulation(data);
+        const normalized = normalizeSimulationData(data);
+        setSimulation(normalized);
+      }
     } catch (error) {
       console.error('Error loading simulation:', error);
     } finally {
@@ -120,7 +126,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
   const inputPayload = simulation.input_payload || {};
   const resultPayload = simulation.result_payload || {};
   const simulationInputs = inputPayload.simulationInputs || {};
-  const subFunctions = inputPayload.subFunctions || [];
+  const subFunctions = simulation.subFunctions || [];
   const simulationResult = resultPayload.simulationResult || null;
 
   const tabs = [
@@ -132,29 +138,6 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
     { id: 5, label: 'Results', sublabel: 'FTE recommendations' },
   ];
 
-  const planningTypeLabel = simulationInputs.planningTypeKey
-    ? planningTypeConfig[simulationInputs.planningTypeKey]?.label
-    : 'Not specified';
-
-  const sizeOfOperationLabel = simulationInputs.sizeOfOperationKey
-    ? sizeOfOperationConfig[simulationInputs.sizeOfOperationKey]?.label
-    : 'Not specified';
-
-  const businessArea = simulation.business_area || 'Not specified';
-
-  const companyName = simulationInputs.companyName || simulationInputs.entity || '-';
-  const businessPillar = simulationInputs.businessPillar || '-';
-  const country = simulationInputs.country || '-';
-  const region = simulationInputs.region || '-';
-
-  const scopeDriverType = simulationInputs.scopeDriverType || null;
-  const scopeDriverValue = simulationInputs.scopeDriverValue || null;
-  const employeesSupported = scopeDriverType === 'employees_supported' ? scopeDriverValue : null;
-  const workLocations = scopeDriverType === 'sites_locations' ? scopeDriverValue : null;
-  const activeWorkstreams = scopeDriverType === 'projects_portfolios' ? scopeDriverValue : null;
-
-  const contextObjectives = simulationInputs.contextObjectives || simulationInputs.context_objectives || '-';
-
   const toggleSubFunction = (index: number) => {
     setExpandedSubFunctions(prev => ({
       ...prev,
@@ -162,39 +145,20 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
     }));
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    } else if (diffDays < 30) {
-      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">{simulation.simulation_name}</h2>
+            <h2 className="text-2xl font-bold text-white">{simulation.simulationName}</h2>
             <div className="flex items-center gap-4 mt-1 text-sm text-teal-50">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>{formatDate(simulation.created_at)}</span>
+                <span>{formatSimulationDate(simulation.created_at)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Briefcase className="w-4 h-4" />
-                <span>{businessArea}</span>
+                <span>{simulation.businessArea}</span>
               </div>
             </div>
           </div>
@@ -250,7 +214,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                       Simulation Name
                     </label>
                     <div className="text-lg font-medium text-gray-900">
-                      {simulation.simulation_name}
+                      {simulation.simulationName}
                     </div>
                   </div>
 
@@ -258,9 +222,9 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Entity / Company
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{companyName}</div>
-                    {businessPillar !== '-' && (
-                      <div className="text-sm text-gray-600 mt-1">Business Pillar: {businessPillar}</div>
+                    <div className="text-lg font-medium text-gray-900">{simulation.companyName}</div>
+                    {simulation.businessPillar !== '-' && simulation.businessPillar !== 'Custom' && (
+                      <div className="text-sm text-gray-600 mt-1">Business Pillar: {simulation.businessPillar}</div>
                     )}
                   </div>
 
@@ -269,11 +233,8 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                       Location / Region
                     </label>
                     <div className="text-lg font-medium text-gray-900">
-                      {country !== '-' ? country : region}
+                      {getLocationDisplay(simulation.country, simulation.region)}
                     </div>
-                    {country !== '-' && region !== '-' && region !== 'Custom' && (
-                      <div className="text-sm text-gray-600 mt-1">Region: {region}</div>
-                    )}
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
@@ -283,29 +244,27 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                     <div className="space-y-3 mt-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Employees Supported (Headcount served)</span>
-                        <span className={`text-lg font-semibold ${employeesSupported ? 'text-teal-700' : 'text-gray-400'}`}>
-                          {employeesSupported !== null ? employeesSupported.toLocaleString() : '-'}
+                        <span className={`text-lg font-semibold ${simulation.employeesSupported ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {formatNumber(simulation.employeesSupported)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Work Locations Supported (Sites/outlets/buildings)</span>
-                        <span className={`text-lg font-semibold ${workLocations ? 'text-teal-700' : 'text-gray-400'}`}>
-                          {workLocations !== null ? workLocations.toLocaleString() : '-'}
+                        <span className={`text-lg font-semibold ${simulation.workLocations ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {formatNumber(simulation.workLocations)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Active Workstreams (Projects/initiatives)</span>
-                        <span className={`text-lg font-semibold ${activeWorkstreams ? 'text-teal-700' : 'text-gray-400'}`}>
-                          {activeWorkstreams !== null ? activeWorkstreams.toLocaleString() : '-'}
+                        <span className={`text-lg font-semibold ${simulation.activeWorkstreams ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {formatNumber(simulation.activeWorkstreams)}
                         </span>
                       </div>
-                      {scopeDriverType && (
+                      {simulation.scopeDriverType && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <span className="text-sm text-gray-600">
                             Selected Scope Driver: <span className="font-medium text-gray-900">
-                              {scopeDriverType === 'employees_supported' && 'Employees Supported'}
-                              {scopeDriverType === 'sites_locations' && 'Work Locations Supported'}
-                              {scopeDriverType === 'projects_portfolios' && 'Active Workstreams'}
+                              {simulation.scopeDriverLabel}
                             </span>
                           </span>
                         </div>
@@ -317,14 +276,14 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Planning Type
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{planningTypeLabel}</div>
+                    <div className="text-lg font-medium text-gray-900">{simulation.planningTypeLabel}</div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Size of Operation
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{sizeOfOperationLabel}</div>
+                    <div className="text-lg font-medium text-gray-900">{simulation.sizeOfOperationLabel}</div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
@@ -332,7 +291,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                       Context & Objectives (Optional)
                     </label>
                     <div className="text-lg font-medium text-gray-900 whitespace-pre-wrap">
-                      {contextObjectives}
+                      {simulation.contextObjectives}
                     </div>
                   </div>
                 </div>
@@ -348,7 +307,7 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
                 <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {businessArea}
+                    {simulation.businessArea}
                   </h3>
                   <p className="text-gray-600">
                     {subFunctions.length} sub-function{subFunctions.length !== 1 ? 's' : ''} configured
@@ -757,11 +716,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                     <div className="space-y-2 text-sm text-gray-700">
                       <div className="flex justify-between">
                         <span>Planning Type:</span>
-                        <span className="font-medium">{planningTypeLabel}</span>
+                        <span className="font-medium">{simulation.planningTypeLabel}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Size of Operation:</span>
-                        <span className="font-medium">{sizeOfOperationLabel}</span>
+                        <span className="font-medium">{simulation.sizeOfOperationLabel}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Sub-Functions:</span>
@@ -769,11 +728,11 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                       </div>
                       <div className="flex justify-between">
                         <span>Total FTE:</span>
-                        <span className="font-medium">{simulation.total_fte?.toFixed(1) || 'N/A'}</span>
+                        <span className="font-medium">{simulation.totalFte?.toFixed(1) || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Monthly Cost:</span>
-                        <span className="font-medium">RM {Math.round(simulation.total_monthly_cost || 0).toLocaleString()}</span>
+                        <span className="font-medium">RM {Math.round(simulation.totalMonthlyCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -785,10 +744,10 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
               <div className="max-w-7xl mx-auto">
                 <div className="mb-6">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    MVO Results: {simulation.simulation_name}
+                    MVO Results: {simulation.simulationName}
                   </h1>
                   <p className="text-gray-600">
-                    Planning Type: {planningTypeLabel} • Size of Operation: {sizeOfOperationLabel}
+                    Planning Type: {simulation.planningTypeLabel} • Size of Operation: {simulation.sizeOfOperationLabel}
                   </p>
                 </div>
 
