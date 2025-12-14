@@ -142,6 +142,19 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
   const businessArea = simulation.business_area || 'Not specified';
 
+  const companyName = simulationInputs.companyName || simulationInputs.entity || '-';
+  const businessPillar = simulationInputs.businessPillar || '-';
+  const country = simulationInputs.country || '-';
+  const region = simulationInputs.region || '-';
+
+  const scopeDriverType = simulationInputs.scopeDriverType || null;
+  const scopeDriverValue = simulationInputs.scopeDriverValue || null;
+  const employeesSupported = scopeDriverType === 'employees_supported' ? scopeDriverValue : null;
+  const workLocations = scopeDriverType === 'sites_locations' ? scopeDriverValue : null;
+  const activeWorkstreams = scopeDriverType === 'projects_portfolios' ? scopeDriverValue : null;
+
+  const contextObjectives = simulationInputs.contextObjectives || simulationInputs.context_objectives || '-';
+
   const toggleSubFunction = (index: number) => {
     setExpandedSubFunctions(prev => ({
       ...prev,
@@ -243,23 +256,84 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      What type of planning are you doing?
+                      Entity / Company
+                    </label>
+                    <div className="text-lg font-medium text-gray-900">{companyName}</div>
+                    {businessPillar !== '-' && (
+                      <div className="text-sm text-gray-600 mt-1">Business Pillar: {businessPillar}</div>
+                    )}
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Location / Region
+                    </label>
+                    <div className="text-lg font-medium text-gray-900">
+                      {country !== '-' ? country : region}
+                    </div>
+                    {country !== '-' && region !== '-' && region !== 'Custom' && (
+                      <div className="text-sm text-gray-600 mt-1">Region: {region}</div>
+                    )}
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Scope Size (What are you supporting?)
+                    </label>
+                    <div className="space-y-3 mt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Employees Supported (Headcount served)</span>
+                        <span className={`text-lg font-semibold ${employeesSupported ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {employeesSupported !== null ? employeesSupported.toLocaleString() : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Work Locations Supported (Sites/outlets/buildings)</span>
+                        <span className={`text-lg font-semibold ${workLocations ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {workLocations !== null ? workLocations.toLocaleString() : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Active Workstreams (Projects/initiatives)</span>
+                        <span className={`text-lg font-semibold ${activeWorkstreams ? 'text-teal-700' : 'text-gray-400'}`}>
+                          {activeWorkstreams !== null ? activeWorkstreams.toLocaleString() : '-'}
+                        </span>
+                      </div>
+                      {scopeDriverType && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <span className="text-sm text-gray-600">
+                            Selected Scope Driver: <span className="font-medium text-gray-900">
+                              {scopeDriverType === 'employees_supported' && 'Employees Supported'}
+                              {scopeDriverType === 'sites_locations' && 'Work Locations Supported'}
+                              {scopeDriverType === 'projects_portfolios' && 'Active Workstreams'}
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Planning Type
                     </label>
                     <div className="text-lg font-medium text-gray-900">{planningTypeLabel}</div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Size of operation
+                      Size of Operation
                     </label>
                     <div className="text-lg font-medium text-gray-900">{sizeOfOperationLabel}</div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Business Area / Function
+                      Context & Objectives (Optional)
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{businessArea}</div>
+                    <div className="text-lg font-medium text-gray-900 whitespace-pre-wrap">
+                      {contextObjectives}
+                    </div>
                   </div>
                 </div>
               </div>
