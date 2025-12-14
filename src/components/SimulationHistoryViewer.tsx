@@ -274,17 +274,72 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Planning Type
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{simulation.planningTypeLabel}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { id: 'new_project', title: 'New Project', description: 'Setting up a new project with temporary or dedicated resources.' },
+                        { id: 'new_function', title: 'New Function', description: 'Creating a new permanent function or department from scratch.' },
+                        { id: 'new_business_unit', title: 'New Business Unit', description: 'Launching a new business unit with multiple functions and teams.' },
+                        { id: 'restructuring', title: 'Restructuring', description: 'Reorganizing an existing function to improve efficiency or reduce costs.' },
+                        { id: 'bau_monthly_operations', title: 'BAU / Monthly Operations', description: 'Recurring monthly workload like payroll cycle, HR operations, or routine business processes.' },
+                      ].map(type => (
+                        <div
+                          key={type.id}
+                          className={`
+                            p-4 rounded-lg border-2
+                            ${
+                              simulation.planningType === type.id || simulation.planningTypeLabel?.includes(type.title)
+                                ? 'border-teal-600 bg-teal-50'
+                                : 'border-gray-200 bg-gray-50'
+                            }
+                          `}
+                        >
+                          <div className="font-semibold text-gray-900 mb-1">
+                            {type.title}
+                          </div>
+                          <div className="text-sm text-gray-600">{type.description}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Size of Operation
                     </label>
-                    <div className="text-lg font-medium text-gray-900">{simulation.sizeOfOperationLabel}</div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        { id: 'small_lean', title: 'Small / Lean', subtitle: '(minimum team)', description: 'For pilot projects, small sites, low workload or tight budget situations.' },
+                        { id: 'medium_standard', title: 'Medium / Standard', subtitle: '(normal operations)', description: 'For regular daily operations with a balanced workload.' },
+                        { id: 'large_extended', title: 'Large / Extended', subtitle: '(full scale / growth)', description: 'For big projects, multiple locations, high demand or rapid expansion.' },
+                      ].map(size => (
+                        <div
+                          key={size.id}
+                          className={`
+                            p-4 rounded-lg border-2
+                            ${
+                              simulation.operationSize === size.id || simulation.sizeOfOperationLabel?.includes(size.title)
+                                ? 'border-teal-600 bg-teal-50'
+                                : 'border-gray-200 bg-gray-50'
+                            }
+                          `}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-gray-900">
+                              {size.title}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {size.subtitle}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 italic">
+                            {size.description}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
@@ -684,16 +739,143 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
             )}
 
             {activeTab === 3 && (
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b">
                   <h2 className="text-2xl font-bold text-gray-900">Operating Model</h2>
                   <ReadOnlyBadge />
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-blue-900">
-                    This section shows operating model configuration, delivery approach, and resource allocation strategies.
-                  </p>
+                <div className="space-y-6">
+                  {subFunctions.map((sf: any, index: number) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md p-6 border-2 border-gray-200">
+                      <div className="bg-teal-600 text-white px-6 py-4 rounded-lg mb-6">
+                        <div className="text-sm opacity-90">
+                          Sub-Function {index + 1} of {subFunctions.length}
+                        </div>
+                        <div className="text-xl font-bold mt-1">{sf.name}</div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            Organizational Structure
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                              { value: 'centralized', label: 'Centralized', desc: 'Single team serves all' },
+                              { value: 'decentralized', label: 'Decentralized', desc: 'Teams at each location' },
+                              { value: 'hybrid', label: 'Hybrid', desc: 'Mix of both approaches' },
+                            ].map(option => (
+                              <div
+                                key={option.value}
+                                className={`
+                                  p-4 rounded-lg border-2
+                                  ${
+                                    sf.operatingModel?.structure === option.value
+                                      ? 'border-teal-600 bg-teal-50'
+                                      : 'border-gray-200 bg-gray-50'
+                                  }
+                                `}
+                              >
+                                <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
+                                <div className="text-sm text-gray-600">{option.desc}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            Delivery Model
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                              { value: 'in_house', label: 'In-House', desc: 'All internal resources' },
+                              { value: 'outsourced', label: 'Outsourced', desc: '3rd party vendor' },
+                              { value: 'hybrid', label: 'Hybrid', desc: 'Mix of both models' },
+                            ].map(option => (
+                              <div
+                                key={option.value}
+                                className={`
+                                  p-4 rounded-lg border-2
+                                  ${
+                                    sf.operatingModel?.delivery === option.value
+                                      ? 'border-teal-600 bg-teal-50'
+                                      : 'border-gray-200 bg-gray-50'
+                                  }
+                                `}
+                              >
+                                <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
+                                <div className="text-sm text-gray-600">{option.desc}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            Automation Level
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                              { value: 'manual', label: 'Manual', desc: 'Paper-based, manual tasks' },
+                              { value: 'partially_automated', label: 'Partially Automated', desc: 'Some digital tools, mixed' },
+                              { value: 'highly_automated', label: 'Highly Automated', desc: 'End-to-end automation' },
+                            ].map(option => (
+                              <div
+                                key={option.value}
+                                className={`
+                                  p-4 rounded-lg border-2
+                                  ${
+                                    sf.operatingModel?.automationLevel === option.value
+                                      ? 'border-teal-600 bg-teal-50'
+                                      : 'border-gray-200 bg-gray-50'
+                                  }
+                                `}
+                              >
+                                <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
+                                <div className="text-sm text-gray-600">{option.desc}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            Operating Hours / Coverage
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                              { value: 'office_hours', label: 'Office Hours', desc: '8am - 5pm weekdays' },
+                              { value: 'extended_hours', label: 'Extended Hours', desc: '7am - 10pm + weekends' },
+                              { value: 'twenty_four_seven', label: '24/7', desc: 'Round-the-clock shifts' },
+                            ].map(option => (
+                              <div
+                                key={option.value}
+                                className={`
+                                  p-4 rounded-lg border-2
+                                  ${
+                                    sf.operatingModel?.coverage === option.value
+                                      ? 'border-teal-600 bg-teal-50'
+                                      : 'border-gray-200 bg-gray-50'
+                                  }
+                                `}
+                              >
+                                <div className="font-semibold text-gray-900 mb-1">{option.label}</div>
+                                <div className="text-sm text-gray-600">{option.desc}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {subFunctions.length === 0 && (
+                    <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-8 text-center text-gray-500">
+                      No sub-functions configured
+                    </div>
+                  )}
                 </div>
               </div>
             )}
