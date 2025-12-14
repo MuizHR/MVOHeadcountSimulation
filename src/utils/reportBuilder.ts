@@ -5,6 +5,8 @@ export interface ReportPayload extends ExportData {
   schemaVersion: string;
   engineVersion: string;
   generatedAt: string;
+  companyName: string;
+  businessPillar: string;
   entity: string;
   region: string;
   scopeDriver: string;
@@ -60,6 +62,8 @@ export function buildReportPayload(
 
   return {
     simulationName: simulation.context.simulationName,
+    companyName: simulation.context.companyName || 'Not specified',
+    businessPillar: simulation.context.businessPillar || 'Custom',
     entity: simulation.context.entity || 'Not specified',
     region: simulation.context.region || 'Not specified',
     planningType: formatPlanningType(simulation.context.planningType),
@@ -88,6 +92,14 @@ export function getSimulationMetadataSummary(simulation: CanonicalSimulation): s
     `Operation Size: ${formatOperationSize(simulation.context.operationSize)}`,
   ];
 
+  if (simulation.context.companyName) {
+    lines.push(`Company: ${simulation.context.companyName}`);
+  }
+
+  if (simulation.context.businessPillar) {
+    lines.push(`Business Pillar: ${simulation.context.businessPillar}`);
+  }
+
   if (simulation.context.entity) {
     lines.push(`Entity: ${simulation.context.entity}`);
   }
@@ -111,9 +123,10 @@ export function getSimulationContextForExport(simulation: CanonicalSimulation): 
   return {
     'Simulation Name': simulation.context.simulationName,
     'Schema Version': simulation.schemaVersion,
+    'Company / Entity': simulation.context.companyName || 'Not specified',
+    'Business Pillar': simulation.context.businessPillar || 'Custom',
     'Planning Type': formatPlanningType(simulation.context.planningType),
     'Operation Size': formatOperationSize(simulation.context.operationSize),
-    'Entity': simulation.context.entity || 'Not specified',
     'Region': simulation.context.region || 'Not specified',
     'Scope': formatScopeDriver(simulation),
     'Auto-Size Enabled': simulation.context.autoSizeEnabled ? 'Yes' : 'No',

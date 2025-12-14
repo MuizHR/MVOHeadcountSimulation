@@ -4,6 +4,8 @@ import { CURRENT_SCHEMA_VERSION, SCHEMA_CHANGELOG } from '../types/canonicalSimu
 export function getDefaultSimulation(): CanonicalSimulation {
   const context: SimulationContext = {
     simulationName: '',
+    companyName: '',
+    businessPillar: 'Custom',
     entity: null,
     region: null,
     planningType: 'new_project',
@@ -66,6 +68,8 @@ export function getSchemaChangelog() {
 export function getDefaultContext(): SimulationContext {
   return {
     simulationName: '',
+    companyName: '',
+    businessPillar: 'Custom',
     entity: null,
     region: null,
     planningType: 'new_project',

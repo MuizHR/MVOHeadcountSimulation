@@ -5,6 +5,8 @@ import { SimulationResult } from '../types/dashboardResult';
 
 export interface ExportData {
   simulationName: string;
+  companyName?: string;
+  businessPillar?: string;
   entity?: string;
   region?: string;
   planningType: string;
@@ -49,11 +51,21 @@ export async function exportToWord(data: ExportData): Promise<void> {
       })
     ];
 
-    if (data.entity) {
+    if (data.companyName) {
       contextSection.push(new Paragraph({
         children: [
-          new TextRun({ text: 'Entity / Company: ', bold: true }),
-          new TextRun(data.entity)
+          new TextRun({ text: 'Company / Entity: ', bold: true }),
+          new TextRun(data.companyName)
+        ],
+        spacing: { after: 100 }
+      }));
+    }
+
+    if (data.businessPillar) {
+      contextSection.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Business Pillar: ', bold: true }),
+          new TextRun(data.businessPillar)
         ],
         spacing: { after: 100 }
       }));
@@ -215,8 +227,13 @@ export function exportToPDF(data: ExportData): void {
     doc.text(`Simulation Name: ${data.simulationName}`, 20, yPos);
     yPos += 10;
 
-    if (data.entity) {
-      doc.text(`Entity / Company: ${data.entity}`, 20, yPos);
+    if (data.companyName) {
+      doc.text(`Company / Entity: ${data.companyName}`, 20, yPos);
+      yPos += 10;
+    }
+
+    if (data.businessPillar) {
+      doc.text(`Business Pillar: ${data.businessPillar}`, 20, yPos);
       yPos += 10;
     }
 
@@ -290,8 +307,12 @@ export function exportToExcel(data: ExportData): void {
       ['Simulation Name', data.simulationName]
     ];
 
-    if (data.entity) {
-      detailsData.push(['Entity / Company', data.entity]);
+    if (data.companyName) {
+      detailsData.push(['Company / Entity', data.companyName]);
+    }
+
+    if (data.businessPillar) {
+      detailsData.push(['Business Pillar', data.businessPillar]);
     }
 
     if (data.region) {

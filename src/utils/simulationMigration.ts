@@ -9,6 +9,7 @@ import type {
   CURRENT_SCHEMA_VERSION,
   CURRENT_ENGINE_VERSION,
 } from '../types/canonicalSimulation';
+import { inferPillarFromCompanyName } from '../config/companies';
 
 export function migrateSimulation(rawSimulation: any): CanonicalSimulation {
   if (!rawSimulation) {
@@ -29,8 +30,13 @@ function migrateFromLegacy(raw: any): CanonicalSimulation {
   const scenarios = raw.scenarios;
   const selectedScenarioType = raw.selected_scenario_type || raw.selectedScenarioType;
 
+  const companyName = inputs.companyName || inputs.company_name || inputs.entity || '';
+  const businessPillar = inputs.businessPillar || inputs.business_pillar || inferPillarFromCompanyName(companyName);
+
   const context: SimulationContext = {
     simulationName: inputs.simulationName || inputs.simulation_name || 'Untitled Simulation',
+    companyName: companyName,
+    businessPillar: businessPillar,
     entity: inputs.entity || null,
     region: inputs.region || null,
     planningType: inputs.planningType || inputs.planning_type || 'new_function',
@@ -105,6 +111,10 @@ function migrateFromLegacy(raw: any): CanonicalSimulation {
     'id',
     'simulationName',
     'simulation_name',
+    'companyName',
+    'company_name',
+    'businessPillar',
+    'business_pillar',
     'entity',
     'region',
     'planningType',
@@ -195,6 +205,8 @@ function migrateFromLegacy(raw: any): CanonicalSimulation {
 export function canonicalToLegacy(canonical: CanonicalSimulation): SimulationInputs {
   return {
     simulationName: canonical.context.simulationName,
+    companyName: canonical.context.companyName,
+    businessPillar: canonical.context.businessPillar,
     entity: canonical.context.entity || undefined,
     region: canonical.context.region || undefined,
     planningType: canonical.context.planningType,

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Info, CheckCircle } from 'lucide-react';
 import { useWizard } from '../../contexts/WizardContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { PlanningType, OperationSize, ScopeDriverType } from '../../types/simulation';
 import { WizardNavigation } from './WizardNavigation';
 import { Tooltip } from '../Tooltip';
+import { CompanySelector } from '../CompanySelector';
 import { planningTypeConfig, sizeOfOperationConfig, mapPlanningTypeToKey, mapSizeOfOperationToKey } from '../../types/planningConfig';
 import { scopeThresholdService, ScopeThreshold } from '../../services/scopeThresholdService';
 
@@ -157,8 +159,10 @@ function getRecommendationText(
 export function Step1PlanningContext() {
   const { state, updateSimulationInputs, nextStep } = useWizard();
   const { simulationInputs } = state;
+  const { appUser } = useAuth();
   const [thresholds, setThresholds] = useState<ScopeThreshold[]>([]);
   const [loadingThresholds, setLoadingThresholds] = useState(true);
+  const [companyError, setCompanyError] = useState('');
 
   const selectedType = PLANNING_TYPES.find(
     t => t.id === simulationInputs.planningType
@@ -200,7 +204,19 @@ export function Step1PlanningContext() {
     }
   }, [autoSizeEnabled, simulationInputs.scopeDriverType, simulationInputs.scopeDriverValue, thresholds]);
 
-  const canContinue = !!simulationInputs.simulationName && !!simulationInputs.planningType;
+  const canContinue =
+    !!simulationInputs.simulationName &&
+    !!simulationInputs.planningType &&
+    !!simulationInputs.companyName;
+
+  const handleNext = () => {
+    if (!simulationInputs.companyName) {
+      setCompanyError('Please select a company/entity');
+      return;
+    }
+    setCompanyError('');
+    nextStep();
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -237,20 +253,17 @@ export function Step1PlanningContext() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Entity / Company *
               </label>
-              <select
-                value={simulationInputs.entity || ''}
-                onChange={e =>
-                  updateSimulationInputs({ entity: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              >
-                <option value="">Select entity...</option>
-                {ENTITIES.map(entity => (
-                  <option key={entity} value={entity}>
-                    {entity}
-                  </option>
-                ))}
-              </select>
+              <CompanySelector
+                value={simulationInputs.companyName || ''}
+                businessPillar={simulationInputs.businessPillar || 'Custom'}
+                onChange={(companyName, businessPillar) => {
+                  updateSimulationInputs({ companyName, businessPillar });
+                  setCompanyError('');
+                }}
+                userId={appUser?.id}
+                required={true}
+                error={companyError}
+              />
             </div>
 
             <div>
@@ -546,7 +559,7 @@ export function Step1PlanningContext() {
       </div>
 
       <WizardNavigation
-        onNext={nextStep}
+        onNext={handleNext}
         canGoBack={false}
         canGoNext={true}
         isNextDisabled={!canContinue}

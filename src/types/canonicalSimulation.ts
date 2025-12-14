@@ -18,6 +18,8 @@ export const CURRENT_ENGINE_VERSION = '1.0.0';
 
 export interface SimulationContext {
   simulationName: string;
+  companyName: string;
+  businessPillar: string;
   entity?: string | null;
   region?: string | null;
   planningType: PlanningType;
@@ -98,6 +100,7 @@ export const SCHEMA_CHANGELOG: SchemaChangelogEntry[] = [
       'Added entity and region fields to context',
       'Added autoSizeEnabled field to context',
       'Added scopeDriverType and scopeDriverValue to context',
+      'Added companyName and businessPillar fields (replaces/enhances entity)',
     ],
   },
 ];

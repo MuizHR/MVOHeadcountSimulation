@@ -97,6 +97,14 @@ export function SavedSimulations({ onLoad }: SavedSimulationsProps) {
           >
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">{sim.context.simulationName}</p>
+              {sim.context.companyName && (
+                <p className="text-xs text-gray-600 truncate mt-1">
+                  {sim.context.companyName}
+                  {sim.context.businessPillar && sim.context.businessPillar !== 'Custom' && (
+                    <span className="text-gray-400"> • {sim.context.businessPillar}</span>
+                  )}
+                </p>
+              )}
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                 <Clock className="w-3 h-3" />
                 <span>{formatDate(sim.createdAt!)}</span>

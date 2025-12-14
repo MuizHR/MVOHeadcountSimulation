@@ -49,6 +49,8 @@ export interface WorkforceMix {
 
 export interface SimulationInputs {
   simulationName: string;
+  companyName?: string;
+  businessPillar?: string;
   entity?: string;
   region?: string;
   planningType: PlanningType;
