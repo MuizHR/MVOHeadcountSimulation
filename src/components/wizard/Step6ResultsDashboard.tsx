@@ -263,7 +263,8 @@ export function Step6ResultsDashboard() {
       avgDurationDays: simulationResult.avgDurationDays,
       p90DurationDays: simulationResult.p90DurationDays,
       successRatePct: simulationResult.successRatePct,
-      avgMonthlyCostRm: simulationResult.avgMonthlyCostRm
+      avgMonthlyCostRm: simulationResult.avgMonthlyCostRm,
+      simulationResult: simulationResult
     };
   };
 
