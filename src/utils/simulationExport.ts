@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { SimulationHistory } from '../types/simulationHistory';
-import { SimulationResult } from '../types/dashboardResult';
+import { SimulationResult, ComparisonRow } from '../types/dashboardResult';
 import { normalizeSimulationData, getLocationDisplay, getCompanyDisplay, formatNumber } from './simulationNormalization';
 
 const TEAL_COLOR = '0E7490';
@@ -14,6 +14,16 @@ const PURPLE_COLOR = '7C3AED';
 const LIGHT_PURPLE = 'EDE9FE';
 const GRAY_100 = 'F3F4F6';
 const GRAY_200 = 'E5E7EB';
+const GREEN_100 = 'D1FAE5';
+const GREEN_300 = '6EE7B7';
+const AMBER_100 = 'FEF3C7';
+const RED_100 = 'FEE2E2';
+
+function getRiskLabel(riskPct: number): string {
+  if (riskPct < 10) return 'LOW';
+  if (riskPct < 25) return 'MEDIUM';
+  return 'HIGH';
+}
 
 export async function exportSimulationToWord(simulation: SimulationHistory): Promise<void> {
   try {
@@ -198,6 +208,57 @@ export async function exportSimulationToWord(simulation: SimulationHistory): Pro
 
     if (simulationResult) {
       children.push(new Paragraph({
+        text: 'Understanding the Results',
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 400, after: 200 },
+        shading: {
+          type: ShadingType.CLEAR,
+          color: LIGHT_BLUE,
+          fill: LIGHT_BLUE
+        }
+      }));
+
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Baseline vs MVO: ', bold: true }),
+          new TextRun({ text: 'Baseline reflects traditional Excel-style headcount calculation. MVO (Minimum Viable Operations) is the optimized headcount that balances cost, time, and risk based on Monte Carlo simulation.' })
+        ],
+        spacing: { after: 100 }
+      }));
+
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Reading the Comparison Table: ', bold: true }),
+          new TextRun({ text: 'Each row shows a different team size. The green highlighted row is the MVO recommendation that best balances delivery time, cost, and success rate.' })
+        ],
+        spacing: { after: 100 }
+      }));
+
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'P-values (P50, P75, P90): ', bold: true }),
+          new TextRun({ text: 'These percentiles show delivery time confidence. P90 means 90% of scenarios finish on or before this duration. Higher percentiles account for delays and risk factors.' })
+        ],
+        spacing: { after: 100 }
+      }));
+
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Risk Categories: ', bold: true }),
+          new TextRun({ text: 'Low risk (<10%) indicates high confidence. Medium risk (10-25%) suggests monitoring needed. High risk (>25%) indicates potential delivery challenges.' })
+        ],
+        spacing: { after: 100 }
+      }));
+
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'System-Suggested Roles: ', bold: true }),
+          new TextRun({ text: 'The role composition uses JLG salary bands and is a starting point. Adjust based on specific requirements, internal structures, and market conditions.' })
+        ],
+        spacing: { after: 300 }
+      }));
+
+      children.push(new Paragraph({
         text: 'MVO Recommendation',
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 300, after: 200 },
@@ -332,6 +393,55 @@ export async function exportSimulationToWord(simulation: SimulationHistory): Pro
       children.push(keyStatsTable);
 
       children.push(new Paragraph({
+        text: 'Headcount Comparison - All Sub-Functions (Combined)',
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 400, after: 200 },
+        shading: {
+          type: ShadingType.CLEAR,
+          color: LIGHT_TEAL,
+          fill: LIGHT_TEAL
+        }
+      }));
+
+      children.push(new Paragraph({
+        text: 'Use this table to see how different team sizes affect time, cost and risk. The green row shows the MVO recommendation that best balances these factors.',
+        italics: true,
+        spacing: { after: 150 }
+      }));
+
+      const combinedComparisonRows = [
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: 'HC', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'Avg Days', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'P90 Days', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'Avg Cost (RM)', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'Success %', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'Risk', bold: true })], shading: { fill: PURPLE_COLOR } }),
+            new TableCell({ children: [new Paragraph({ text: 'Status', bold: true })], shading: { fill: PURPLE_COLOR } })
+          ]
+        }),
+        ...simulationResult.combinedComparisonRows.slice(0, 15).map(row => new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph(row.headcount.toFixed(1))], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph(row.avgDurationDays.toFixed(1))], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph(row.p90DurationDays.toFixed(1))], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph(Math.round(row.avgCostRm).toLocaleString())], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph(`${row.successRatePct.toFixed(1)}%`)], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph(`${row.riskPct.toFixed(1)}% ${getRiskLabel(row.riskPct)}`)], shading: row.isMvo ? { fill: GREEN_100 } : undefined }),
+            new TableCell({ children: [new Paragraph({ text: row.isMvo ? 'Selected' : row.isBaseline ? 'Baseline' : '', bold: row.isMvo || row.isBaseline })], shading: row.isMvo ? { fill: GREEN_100 } : undefined })
+          ]
+        }))
+      ];
+
+      const combinedComparisonTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: combinedComparisonRows
+      });
+
+      children.push(combinedComparisonTable);
+
+      children.push(new Paragraph({
         text: 'Sub-Function Details',
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 400, after: 200 },
@@ -387,6 +497,19 @@ export async function exportSimulationToWord(simulation: SimulationHistory): Pro
 
         children.push(sfTable);
 
+        if (subFunction.aiSummaryMarkdown) {
+          children.push(new Paragraph({
+            text: 'AI Summary for HR Decision-Making',
+            bold: true,
+            spacing: { before: 150, after: 50 }
+          }));
+
+          children.push(new Paragraph({
+            text: subFunction.aiSummaryMarkdown,
+            spacing: { after: 150 }
+          }));
+        }
+
         children.push(new Paragraph({
           text: 'Comparison Table',
           bold: true,
@@ -404,7 +527,7 @@ export async function exportSimulationToWord(simulation: SimulationHistory): Pro
               new TableCell({ children: [new Paragraph({ text: 'Type', bold: true })], shading: { fill: PURPLE_COLOR } })
             ]
           }),
-          ...subFunction.comparisonRows.slice(0, 10).map(row => new TableRow({
+          ...subFunction.comparisonRows.slice(0, 12).map(row => new TableRow({
             children: [
               new TableCell({ children: [new Paragraph(row.headcount.toFixed(1))], shading: row.isMvo ? { fill: LIGHT_TEAL } : undefined }),
               new TableCell({ children: [new Paragraph(row.avgDurationDays.toString())], shading: row.isMvo ? { fill: LIGHT_TEAL } : undefined }),
@@ -422,19 +545,6 @@ export async function exportSimulationToWord(simulation: SimulationHistory): Pro
         });
 
         children.push(comparisonTable);
-
-        if (subFunction.aiSummaryMarkdown) {
-          children.push(new Paragraph({
-            text: 'AI Summary',
-            bold: true,
-            spacing: { before: 150, after: 50 }
-          }));
-
-          children.push(new Paragraph({
-            text: subFunction.aiSummaryMarkdown,
-            spacing: { after: 200 }
-          }));
-        }
       });
 
       children.push(new Paragraph({
@@ -586,6 +696,16 @@ export async function exportSimulationToExcel(simulation: SimulationHistory): Pr
 
     if (simulationResult) {
       summaryData.push([]);
+      summaryData.push(['UNDERSTANDING THE RESULTS']);
+      summaryData.push([]);
+      summaryData.push(['Concept', 'Explanation']);
+      summaryData.push(['Baseline vs MVO', 'Baseline reflects traditional Excel-style headcount calculation. MVO (Minimum Viable Operations) is the optimized headcount that balances cost, time, and risk based on Monte Carlo simulation.']);
+      summaryData.push(['Reading the Comparison Table', 'Each row shows a different team size. The green highlighted row is the MVO recommendation that best balances delivery time, cost, and success rate.']);
+      summaryData.push(['P-values (P50, P75, P90)', 'These percentiles show delivery time confidence. P90 means 90% of scenarios finish on or before this duration. Higher percentiles account for delays and risk factors.']);
+      summaryData.push(['Risk Categories', 'Low risk (<10%) indicates high confidence. Medium risk (10-25%) suggests monitoring needed. High risk (>25%) indicates potential delivery challenges.']);
+      summaryData.push(['System-Suggested Roles', 'The role composition uses JLG salary bands and is a starting point. Adjust based on specific requirements, internal structures, and market conditions.']);
+
+      summaryData.push([]);
       summaryData.push(['MVO RECOMMENDATION']);
       summaryData.push(['Metric', 'Value']);
       summaryData.push(['Total FTE', simulationResult.totalFte.toFixed(1)]);
@@ -605,15 +725,32 @@ export async function exportSimulationToExcel(simulation: SimulationHistory): Pr
     }
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    summarySheet['!cols'] = [{ wch: 30 }, { wch: 50 }, { wch: 25 }];
-
-    summarySheet['A1'].s = { font: { bold: true, sz: 16, color: { rgb: TEAL_COLOR } }, alignment: { horizontal: 'center' } };
-    summarySheet['A2'].s = { font: { bold: true, sz: 14, color: { rgb: TEAL_COLOR } }, alignment: { horizontal: 'center' } };
-    summarySheet['A5'].s = { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: LIGHT_TEAL } } };
-
+    summarySheet['!cols'] = [{ wch: 30 }, { wch: 60 }, { wch: 25 }];
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    if (simulationResult && simulationResult.subFunctions && simulationResult.subFunctions.length > 0) {
+    if (simulationResult) {
+      const headcountData: any[][] = [
+        ['HEADCOUNT COMPARISON - ALL SUB-FUNCTIONS (COMBINED)'],
+        [],
+        ['Use this table to see how different team sizes affect time, cost and risk. The green row shows the MVO recommendation.'],
+        [],
+        ['Headcount', 'Avg Days', 'P90 Days', 'Avg Cost (RM)', 'Success %', 'Risk %', 'Risk Level', 'Status'],
+        ...simulationResult.combinedComparisonRows.map(row => [
+          row.headcount.toFixed(1),
+          row.avgDurationDays.toFixed(1),
+          row.p90DurationDays.toFixed(1),
+          Math.round(row.avgCostRm),
+          row.successRatePct.toFixed(1),
+          row.riskPct.toFixed(1),
+          getRiskLabel(row.riskPct),
+          row.isMvo ? 'Selected' : row.isBaseline ? 'Baseline' : ''
+        ])
+      ];
+
+      const headcountSheet = XLSX.utils.aoa_to_sheet(headcountData);
+      headcountSheet['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(workbook, headcountSheet, 'Headcount Comparison');
+
       simulationResult.subFunctions.forEach((subFunction, index) => {
         const sfData: any[][] = [
           [`SUB-FUNCTION: ${subFunction.name.toUpperCase()}`],
@@ -623,18 +760,25 @@ export async function exportSimulationToExcel(simulation: SimulationHistory): Pr
           ['MVO Headcount', subFunction.mvoHeadcount.toFixed(1)],
           ['Risk Level', subFunction.riskLevel],
           ['Recommended Strategy', subFunction.recommendedStrategy.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')],
-          [],
-          ['COMPARISON ANALYSIS'],
-          ['Headcount', 'Avg Days', 'P90 Days', 'Success %', 'Risk %', 'Type'],
-          ...subFunction.comparisonRows.map(row => [
-            row.headcount.toFixed(1),
-            row.avgDurationDays,
-            row.p90DurationDays,
-            row.successRatePct.toFixed(1),
-            row.riskPct.toFixed(1),
-            row.isMvo ? 'MVO' : row.isBaseline ? 'Baseline' : '-'
-          ])
+          []
         ];
+
+        if (subFunction.aiSummaryMarkdown) {
+          sfData.push(['AI SUMMARY FOR HR DECISION-MAKING']);
+          sfData.push([subFunction.aiSummaryMarkdown]);
+          sfData.push([]);
+        }
+
+        sfData.push(['COMPARISON ANALYSIS']);
+        sfData.push(['Headcount', 'Avg Days', 'P90 Days', 'Success %', 'Risk %', 'Type']);
+        sfData.push(...subFunction.comparisonRows.map(row => [
+          row.headcount.toFixed(1),
+          row.avgDurationDays,
+          row.p90DurationDays,
+          row.successRatePct.toFixed(1),
+          row.riskPct.toFixed(1),
+          row.isMvo ? 'MVO' : row.isBaseline ? 'Baseline' : '-'
+        ]));
 
         const sfSheet = XLSX.utils.aoa_to_sheet(sfData);
         sfSheet['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
@@ -661,7 +805,8 @@ export async function exportSimulationToExcel(simulation: SimulationHistory): Pr
 
       if (simulationResult.systemRoleComposition.rationale) {
         roleData.push([]);
-        roleData.push(['Rationale', simulationResult.systemRoleComposition.rationale]);
+        roleData.push(['RATIONALE']);
+        roleData.push([simulationResult.systemRoleComposition.rationale]);
       }
 
       const roleSheet = XLSX.utils.aoa_to_sheet(roleData);
@@ -684,7 +829,6 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
     const simulationResult: SimulationResult | null = results?.simulationResult || null;
 
     let yPos = 20;
-    const lineHeight = 7;
     const pageHeight = doc.internal.pageSize.height;
     const margin = 20;
     const tealColor: [number, number, number] = [14, 116, 144];
@@ -692,12 +836,15 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
     const blueColor: [number, number, number] = [37, 99, 235];
     const lightBlue: [number, number, number] = [219, 234, 254];
     const purpleColor: [number, number, number] = [124, 58, 237];
+    const greenColor: [number, number, number] = [16, 185, 129];
 
-    const checkPageBreak = () => {
-      if (yPos > pageHeight - margin) {
+    const checkPageBreak = (spaceNeeded: number = 40) => {
+      if (yPos + spaceNeeded > pageHeight - margin) {
         doc.addPage();
         yPos = 20;
+        return true;
       }
+      return false;
     };
 
     doc.setFillColor(...tealColor);
@@ -793,11 +940,40 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
     checkPageBreak();
 
     if (simulationResult) {
+      doc.setFillColor(...lightBlue);
+      doc.rect(15, yPos - 5, 180, 8, 'F');
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Understanding the Results', 20, yPos);
+      yPos += 10;
+
+      const helpTexts = [
+        'Baseline vs MVO: Baseline reflects traditional Excel-style headcount calculation. MVO (Minimum Viable Operations) is the optimized headcount.',
+        'Reading the Comparison Table: Each row shows a different team size. The green row is the MVO recommendation.',
+        'P-values (P50, P75, P90): These percentiles show delivery time confidence. P90 means 90% of scenarios finish on or before this duration.',
+        'Risk Categories: Low risk (<10%) indicates high confidence. Medium risk (10-25%) suggests monitoring. High risk (>25%) indicates challenges.',
+        'System-Suggested Roles: The role composition uses JLG salary bands and is a starting point. Adjust based on specific requirements.'
+      ];
+
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(0, 0, 0);
+
+      helpTexts.forEach(text => {
+        const lines = doc.splitTextToSize(text, 170);
+        checkPageBreak(lines.length * 4);
+        doc.text(lines, 20, yPos);
+        yPos += lines.length * 4 + 2;
+      });
+
+      yPos += 5;
+      checkPageBreak();
+
       doc.setFillColor(...lightTeal);
       doc.rect(15, yPos - 5, 180, 8, 'F');
       doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(0, 0, 0);
       doc.text('MVO Recommendation', 20, yPos);
       yPos += 12;
 
@@ -828,7 +1004,6 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
       doc.rect(15, yPos - 5, 180, 8, 'F');
       doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(0, 0, 0);
       doc.text('Key Statistics', 20, yPos);
       yPos += 12;
 
@@ -854,6 +1029,43 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
       });
 
       yPos = (doc as any).lastAutoTable.finalY + 10;
+      checkPageBreak();
+
+      doc.setFillColor(...lightTeal);
+      doc.rect(15, yPos - 5, 180, 8, 'F');
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text('Headcount Comparison - All Sub-Functions (Combined)', 20, yPos);
+      yPos += 10;
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['HC', 'Avg', 'P90', 'Cost (RM)', 'Success', 'Risk', 'Status']],
+        body: simulationResult.combinedComparisonRows.slice(0, 10).map(row => [
+          row.headcount.toFixed(1),
+          row.avgDurationDays.toFixed(1),
+          row.p90DurationDays.toFixed(1),
+          Math.round(row.avgCostRm).toLocaleString(),
+          `${row.successRatePct.toFixed(1)}%`,
+          `${row.riskPct.toFixed(1)}%`,
+          row.isMvo ? 'Selected' : row.isBaseline ? 'Baseline' : ''
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: purpleColor, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8 },
+        didParseCell: (data) => {
+          if (data.section === 'body') {
+            const rowData = simulationResult.combinedComparisonRows[data.row.index];
+            if (rowData?.isMvo) {
+              (data.cell as any).styles.fillColor = [209, 250, 229];
+              (data.cell as any).styles.fontStyle = 'bold';
+            }
+          }
+        },
+        margin: { left: 20 }
+      });
+
+      yPos = (doc as any).lastAutoTable.finalY + 10;
 
       simulationResult.subFunctions.forEach((subFunction, index) => {
         checkPageBreak();
@@ -869,6 +1081,15 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
         doc.setTextColor(0, 0, 0);
         doc.text(`Work Type: ${subFunction.workTypeLabel} | Baseline: ${subFunction.baselineHeadcount.toFixed(1)} FTE | MVO: ${subFunction.mvoHeadcount.toFixed(1)} FTE`, 20, yPos);
         yPos += 6;
+
+        if (subFunction.aiSummaryMarkdown) {
+          doc.setFontSize(9);
+          doc.setFont(undefined, 'italic');
+          const aiLines = doc.splitTextToSize(`AI Summary: ${subFunction.aiSummaryMarkdown}`, 170);
+          checkPageBreak(aiLines.length * 4);
+          doc.text(aiLines, 20, yPos);
+          yPos += aiLines.length * 4 + 3;
+        }
 
         autoTable(doc, {
           startY: yPos,
@@ -905,19 +1126,18 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
       doc.rect(15, yPos - 5, 180, 8, 'F');
       doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(0, 0, 0);
       doc.text('System Role Composition', 20, yPos);
       yPos += 12;
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Role', 'Level', 'Units', 'FTE Share', 'Monthly Cost (RM)']],
+        head: [['Role', 'Level', 'Units', 'FTE', 'Cost (RM)']],
         body: simulationResult.systemRoleComposition.rows.map(row => [
           row.roleLabel,
           row.levelLabel,
           row.units.toFixed(1),
           row.fteShare.toFixed(2),
-          `RM ${Math.round(row.monthlyCostRm).toLocaleString()}`
+          Math.round(row.monthlyCostRm).toLocaleString()
         ]),
         theme: 'striped',
         headStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
@@ -931,6 +1151,16 @@ export async function exportSimulationToPDF(simulation: SimulationHistory): Prom
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...tealColor);
       doc.text(`Total: RM ${Math.round(simulationResult.systemRoleComposition.totalMonthlyCostRm).toLocaleString()}/month`, 20, yPos);
+
+      if (simulationResult.systemRoleComposition.rationale) {
+        yPos += 8;
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0);
+        const rationaleLines = doc.splitTextToSize(`Rationale: ${simulationResult.systemRoleComposition.rationale}`, 170);
+        checkPageBreak(rationaleLines.length * 4);
+        doc.text(rationaleLines, 20, yPos);
+      }
     }
 
     doc.setFillColor(...tealColor);
