@@ -4,6 +4,8 @@ export interface SimulationHistory {
   simulation_id: string;
   simulation_name: string;
   business_area: string | null;
+  entity: string | null;
+  region: string | null;
   planning_type: string | null;
   size_of_operation: string | null;
   workload_score: number;

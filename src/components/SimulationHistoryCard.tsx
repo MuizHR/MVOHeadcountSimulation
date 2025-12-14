@@ -78,6 +78,25 @@ export const SimulationHistoryCard: React.FC<SimulationHistoryCardProps> = ({
             {simulation.business_area && (
               <p className="text-sm text-gray-600 truncate">{simulation.business_area}</p>
             )}
+            {(simulation.entity || simulation.region) && (
+              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                {simulation.entity && (
+                  <span className="flex items-center gap-1">
+                    <span className="font-medium">Entity:</span>
+                    <span>{simulation.entity}</span>
+                  </span>
+                )}
+                {simulation.entity && simulation.region && (
+                  <span className="text-gray-300">•</span>
+                )}
+                {simulation.region && (
+                  <span className="flex items-center gap-1">
+                    <span className="font-medium">Location:</span>
+                    <span>{simulation.region}</span>
+                  </span>
+                )}
+              </div>
+            )}
             {showOwner && (simulation.user_name || simulation.user_email) && (
               <p className="text-xs text-gray-500 mt-1">
                 Owner: {simulation.user_name} ({simulation.user_email})
