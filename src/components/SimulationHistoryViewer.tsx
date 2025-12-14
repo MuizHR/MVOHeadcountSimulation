@@ -7,6 +7,7 @@ import { HeadcountComparisonTable } from './dashboard/HeadcountComparisonTable';
 import { planningTypeConfig, sizeOfOperationConfig } from '../types/planningConfig';
 import { simulationHistoryService } from '../services/simulationHistoryService';
 import { normalizeSimulationData, formatSimulationDate, formatNumber, getLocationDisplay, getCompanyDisplay, NormalizedSimulationData } from '../utils/simulationNormalization';
+import { StaffConfigDisplay } from './StaffConfigDisplay';
 
 interface SimulationHistoryViewerProps {
   simulationId: string;
@@ -573,23 +574,17 @@ export function SimulationHistoryViewer({ simulationId, onBack }: SimulationHist
                                 <p className="text-gray-600">Configure the roles that will perform this work</p>
                               </div>
 
-                              <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6">
-                                <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                                  Configured Roles (Question 10)
-                                </h4>
-                                {sf.staffConfiguration?.advancedPattern && sf.staffConfiguration.advancedPattern.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {sf.staffConfiguration.advancedPattern.map((role: any, idx: number) => (
-                                      <div key={idx} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
-                                        <div className="text-sm font-medium text-gray-900">{role.label}</div>
-                                        <div className="text-sm text-gray-600">Pattern: {role.pattern}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-500 italic">No role pattern configured</p>
-                                )}
-                              </div>
+                              {sf.staffConfiguration ? (
+                                <StaffConfigDisplay
+                                  totalFteRequired={sf.recommendedFTE?.recommended || sf.calculatedResults?.mvoHeadcount || 0}
+                                  configuration={sf.staffConfiguration}
+                                  title="Staff Type & Cost (Question 10)"
+                                />
+                              ) : (
+                                <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6">
+                                  <p className="text-sm text-gray-500 italic">No staff configuration available</p>
+                                </div>
+                              )}
 
                               <QuestionCard
                                 title="Do staff usually need overtime to cope?"
